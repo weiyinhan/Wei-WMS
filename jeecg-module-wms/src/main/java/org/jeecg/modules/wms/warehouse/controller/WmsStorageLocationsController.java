@@ -15,7 +15,11 @@ import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.common.system.query.QueryRuleEnum;
 import org.jeecg.common.util.oConvertUtils;
 import org.jeecg.modules.wms.warehouse.entity.WmsStorageLocations;
+import org.jeecg.modules.wms.warehouse.entity.WmsStorageZones;
+import org.jeecg.modules.wms.warehouse.entity.WmsWarehouses;
 import org.jeecg.modules.wms.warehouse.service.IWmsStorageLocationsService;
+import org.jeecg.modules.wms.warehouse.service.IWmsStorageZonesService;
+import org.jeecg.modules.wms.warehouse.service.IWmsWarehousesService;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -39,20 +43,24 @@ import io.swagger.v3.oas.annotations.Operation;
 import org.jeecg.common.aspect.annotation.AutoLog;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
- /**
+/**
  * @Description: 储位表
  * @Author: jeecg-boot
- * @Date:   2026-07-11
+ * @Date: 2026-07-11
  * @Version: V1.0
  */
-@Tag(name="储位表")
+@Tag(name = "储位表")
 @RestController
 @RequestMapping("/warehouse/wmsStorageLocations")
 @Slf4j
 public class WmsStorageLocationsController extends JeecgController<WmsStorageLocations, IWmsStorageLocationsService> {
 	@Autowired
 	private IWmsStorageLocationsService wmsStorageLocationsService;
-	
+	@Autowired
+	private IWmsWarehousesService wmsWarehousesService;
+	@Autowired
+	private IWmsStorageZonesService wmsStorageZonesService;
+
 	/**
 	 * 分页列表查询
 	 *
@@ -62,119 +70,166 @@ public class WmsStorageLocationsController extends JeecgController<WmsStorageLoc
 	 * @param req
 	 * @return
 	 */
-	//@AutoLog(value = "储位表-分页列表查询")
-	@Operation(summary="储位表-分页列表查询")
+	// @AutoLog(value = "储位表-分页列表查询")
+	@Operation(summary = "储位表-分页列表查询")
 	@GetMapping(value = "/list")
 	public Result<IPage<WmsStorageLocations>> queryPageList(WmsStorageLocations wmsStorageLocations,
-								   @RequestParam(name="pageNo", defaultValue="1") Integer pageNo,
-								   @RequestParam(name="pageSize", defaultValue="10") Integer pageSize,
-								   HttpServletRequest req) {
-        QueryWrapper<WmsStorageLocations> queryWrapper = QueryGenerator.initQueryWrapper(wmsStorageLocations, req.getParameterMap());
+			@RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
+			@RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
+			HttpServletRequest req) {
+		QueryWrapper<WmsStorageLocations> queryWrapper = QueryGenerator.initQueryWrapper(wmsStorageLocations,
+				req.getParameterMap());
 		Page<WmsStorageLocations> page = new Page<WmsStorageLocations>(pageNo, pageSize);
 		IPage<WmsStorageLocations> pageList = wmsStorageLocationsService.page(page, queryWrapper);
+
+		// // 关联查询仓库和储区名称
+		// List<WmsWarehouses> warehouses = wmsWarehousesService.list();
+		// List<WmsStorageZones> zones = wmsStorageZonesService.list();
+		//
+		// pageList.getRecords().stream().forEach(item -> {
+		// String warehouseId = item.getWarehouseId();
+		// String zoneId = item.getZoneId();
+		//
+		// // 设置仓库名称
+		// WmsWarehouses warehouse = warehouses.stream()
+		// .filter(w -> w.getId().equals(warehouseId))
+		// .findFirst().orElse(null);
+		// if (warehouse != null) {
+		// item.setWarehouseName(warehouse.getWarehouseName());
+		// }
+		//
+		// // 设置储区名称
+		// WmsStorageZones zone = zones.stream()
+		// .filter(z -> z.getId().equals(zoneId))
+		// .findFirst().orElse(null);
+		// if (zone != null) {
+		// item.setZoneName(zone.getZoneName());
+		// }
+		// });
+		// 关联查询仓库储区
+		List<WmsWarehouses> warehouses = wmsWarehousesService.list();
+		List<WmsStorageZones> zones = wmsStorageZonesService.list();
+		pageList.getRecords().stream().forEach(item -> {
+			String warehouseId = item.getWarehouseId();
+			String zoneId = item.getZoneId();
+		//通过id拿到仓库名称
+			WmsWarehouses warehouses1 = warehouses.stream().
+					filter(w->w.getId().equals(warehouseId))
+					.findFirst().orElse(null);
+			if(warehouses1 != null){
+				item.setWarehouseName(warehouses1.getWarehouseName());
+			}
+		//通过id拿到储区名称
+			WmsStorageZones zones1 = zones.stream().
+					filter(z->z.getId().equals(zoneId))
+					.findFirst().orElse(null);
+			if(zones1 != null){
+				item.setZoneName(zones1.getZoneName());
+			}
+		});
 		return Result.OK(pageList);
 	}
-	
+
 	/**
-	 *   添加
+	 * 添加
 	 *
 	 * @param wmsStorageLocations
 	 * @return
 	 */
 	@AutoLog(value = "储位表-添加")
-	@Operation(summary="储位表-添加")
+	@Operation(summary = "储位表-添加")
 	@RequiresPermissions("warehouse:wms_storage_locations:add")
 	@PostMapping(value = "/add")
 	public Result<String> add(@RequestBody WmsStorageLocations wmsStorageLocations) {
 		wmsStorageLocationsService.save(wmsStorageLocations);
 		return Result.OK("添加成功！");
 	}
-	
+
 	/**
-	 *  编辑
+	 * 编辑
 	 *
 	 * @param wmsStorageLocations
 	 * @return
 	 */
 	@AutoLog(value = "储位表-编辑")
-	@Operation(summary="储位表-编辑")
+	@Operation(summary = "储位表-编辑")
 	@RequiresPermissions("warehouse:wms_storage_locations:edit")
-	@RequestMapping(value = "/edit", method = {RequestMethod.PUT,RequestMethod.POST})
+	@RequestMapping(value = "/edit", method = { RequestMethod.PUT, RequestMethod.POST })
 	public Result<String> edit(@RequestBody WmsStorageLocations wmsStorageLocations) {
 		wmsStorageLocationsService.updateById(wmsStorageLocations);
 		return Result.OK("编辑成功!");
 	}
-	
+
 	/**
-	 *   通过id删除
+	 * 通过id删除
 	 *
 	 * @param id
 	 * @return
 	 */
 	@AutoLog(value = "储位表-通过id删除")
-	@Operation(summary="储位表-通过id删除")
+	@Operation(summary = "储位表-通过id删除")
 	@RequiresPermissions("warehouse:wms_storage_locations:delete")
 	@DeleteMapping(value = "/delete")
-	public Result<String> delete(@RequestParam(name="id",required=true) String id) {
+	public Result<String> delete(@RequestParam(name = "id", required = true) String id) {
 		wmsStorageLocationsService.removeById(id);
 		return Result.OK("删除成功!");
 	}
-	
+
 	/**
-	 *  批量删除
+	 * 批量删除
 	 *
 	 * @param ids
 	 * @return
 	 */
 	@AutoLog(value = "储位表-批量删除")
-	@Operation(summary="储位表-批量删除")
+	@Operation(summary = "储位表-批量删除")
 	@RequiresPermissions("warehouse:wms_storage_locations:deleteBatch")
 	@DeleteMapping(value = "/deleteBatch")
-	public Result<String> deleteBatch(@RequestParam(name="ids",required=true) String ids) {
+	public Result<String> deleteBatch(@RequestParam(name = "ids", required = true) String ids) {
 		this.wmsStorageLocationsService.removeByIds(Arrays.asList(ids.split(",")));
 		return Result.OK("批量删除成功!");
 	}
-	
+
 	/**
 	 * 通过id查询
 	 *
 	 * @param id
 	 * @return
 	 */
-	//@AutoLog(value = "储位表-通过id查询")
-	@Operation(summary="储位表-通过id查询")
+	// @AutoLog(value = "储位表-通过id查询")
+	@Operation(summary = "储位表-通过id查询")
 	@GetMapping(value = "/queryById")
-	public Result<WmsStorageLocations> queryById(@RequestParam(name="id",required=true) String id) {
+	public Result<WmsStorageLocations> queryById(@RequestParam(name = "id", required = true) String id) {
 		WmsStorageLocations wmsStorageLocations = wmsStorageLocationsService.getById(id);
-		if(wmsStorageLocations==null) {
+		if (wmsStorageLocations == null) {
 			return Result.error("未找到对应数据");
 		}
 		return Result.OK(wmsStorageLocations);
 	}
 
-    /**
-    * 导出excel
-    *
-    * @param request
-    * @param wmsStorageLocations
-    */
-    @RequiresPermissions("warehouse:wms_storage_locations:exportXls")
-    @RequestMapping(value = "/exportXls")
-    public ModelAndView exportXls(HttpServletRequest request, WmsStorageLocations wmsStorageLocations) {
-        return super.exportXls(request, wmsStorageLocations, WmsStorageLocations.class, "储位表");
-    }
+	/**
+	 * 导出excel
+	 *
+	 * @param request
+	 * @param wmsStorageLocations
+	 */
+	@RequiresPermissions("warehouse:wms_storage_locations:exportXls")
+	@RequestMapping(value = "/exportXls")
+	public ModelAndView exportXls(HttpServletRequest request, WmsStorageLocations wmsStorageLocations) {
+		return super.exportXls(request, wmsStorageLocations, WmsStorageLocations.class, "储位表");
+	}
 
-    /**
-      * 通过excel导入数据
-    *
-    * @param request
-    * @param response
-    * @return
-    */
-    @RequiresPermissions("warehouse:wms_storage_locations:importExcel")
-    @RequestMapping(value = "/importExcel", method = RequestMethod.POST)
-    public Result<?> importExcel(HttpServletRequest request, HttpServletResponse response) {
-        return super.importExcel(request, response, WmsStorageLocations.class);
-    }
+	/**
+	 * 通过excel导入数据
+	 *
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@RequiresPermissions("warehouse:wms_storage_locations:importExcel")
+	@RequestMapping(value = "/importExcel", method = RequestMethod.POST)
+	public Result<?> importExcel(HttpServletRequest request, HttpServletResponse response) {
+		return super.importExcel(request, response, WmsStorageLocations.class);
+	}
 
 }

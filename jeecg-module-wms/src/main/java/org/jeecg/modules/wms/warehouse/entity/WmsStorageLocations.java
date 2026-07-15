@@ -4,10 +4,8 @@ import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.math.BigDecimal;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.annotation.TableLogic;
+
+import com.baomidou.mybatisplus.annotation.*;
 import org.jeecg.common.constant.ProvinceCityArea;
 import org.jeecg.common.util.SpringContextUtils;
 import lombok.Data;
@@ -119,4 +117,16 @@ public class WmsStorageLocations implements Serializable {
 	@Dict(dicCode = "yn")
     @Schema(description = "是否可售")
     private String isSellable;
+
+	/**仓库名称（临时字段）*/
+	@TableField(exist = false)
+    @Schema(description = "仓库名称")
+    private String warehouseName;
+
+	/**储区名称（临时字段）*/
+	@TableField(exist = false)
+    @Schema(description = "储区名称")
+    private String zoneName;
+
+
 }
