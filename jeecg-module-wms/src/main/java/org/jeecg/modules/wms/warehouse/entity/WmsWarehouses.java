@@ -56,6 +56,10 @@ public class WmsWarehouses implements Serializable {
 	/**所属部门*/
     @Schema(description = "所属部门")
     private String sysOrgCode;
+	/**删除状态*/
+	@TableLogic
+    @Schema(description = "删除状态")
+    private Integer delFlag;
 	/**仓库代码*/
 	@Excel(name = "仓库代码", width = 15)
     @Schema(description = "仓库代码")
