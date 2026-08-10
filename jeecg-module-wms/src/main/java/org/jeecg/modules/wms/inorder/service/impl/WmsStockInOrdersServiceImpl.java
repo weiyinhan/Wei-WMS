@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static net.sf.jsqlparser.parser.feature.Feature.insert;
+import static net.sf.jsqlparser.parser.feature.Feature.update;
 
 /**
  * @Description: 入库单主表
@@ -42,6 +43,7 @@ public class WmsStockInOrdersServiceImpl extends ServiceImpl<WmsStockInOrdersMap
 	private RedisUtil redisUtil;
 	@Autowired
 	private IWmsStockInOrderItemsService wmsStockInOrderItemsService;
+
 
 	@Override
 	@Transactional(rollbackFor = Exception.class)
@@ -143,7 +145,63 @@ public class WmsStockInOrdersServiceImpl extends ServiceImpl<WmsStockInOrdersMap
 		if (!wmsStockInOrders.getStatus().equals(WarehouseDictEnum.INBOUND_INITIAL.getCode())) {
 			throw new JeecgBootException("只有初始状态的入库单才能提交审核");
 		}
+		wmsStockInOrders.setStatus(WarehouseDictEnum.INBOUND_SUBMIT_AUDIT.getCode());
+		updateById(wmsStockInOrders);
+	}
+
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public void auditPass(String id) {
+		WmsStockInOrders wmsStockInOrders = getById(id);
+		if (wmsStockInOrders == null) {
+			throw new JeecgBootException("未找到对应入库单");
+		}
+		if (!wmsStockInOrders.getStatus().equals(WarehouseDictEnum.INBOUND_SUBMIT_AUDIT.getCode())) {
+			throw new JeecgBootException("只有提交审核状态的入库单才能审核通过");
+		}
 		wmsStockInOrders.setStatus(WarehouseDictEnum.INBOUND_APPROVED.getCode());
 		updateById(wmsStockInOrders);
+	}
+
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public void auditReject(String id) {
+		WmsStockInOrders wmsStockInOrders = getById(id);
+		if (wmsStockInOrders == null) {
+			throw new JeecgBootException("未找到对应入库单");
+		}
+		if (!wmsStockInOrders.getStatus().equals(WarehouseDictEnum.INBOUND_SUBMIT_AUDIT.getCode())) {
+			throw new JeecgBootException("只有提交审核状态的入库单才能审核不通过");
+		}
+		wmsStockInOrders.setStatus(WarehouseDictEnum.INBOUND_REJECTED.getCode());
+		updateById(wmsStockInOrders);
+	}
+
+	@Override
+	public String updateReceivedStatus(String stockInOrderId) {
+		WmsStockInOrders wmsStockInOrders = new WmsStockInOrders();
+		//根据入库单id查明细
+		List<WmsStockInOrderItems> wmsStockInOrderItems = wmsStockInOrderItemsService.selectByMainId(stockInOrderId);
+		//统计明细中的收货总数和不良品总数
+		int goodQuantity = wmsStockInOrderItems.stream()
+				.mapToInt(WmsStockInOrderItems::getReceivedQuantity)
+				.sum();
+		int badQuantity = wmsStockInOrderItems.stream()
+				.mapToInt(WmsStockInOrderItems::getDefectiveQuantity)
+				.sum();
+		wmsStockInOrders.setTotalReceivedQuantity(goodQuantity);
+		wmsStockInOrders.setTotalDefectiveQuantity(badQuantity);
+		//判断是否全部收货完成：没有任何明细处于"收货中"状态
+		boolean allReceived = wmsStockInOrderItems.stream()
+				.noneMatch(item -> WarehouseDictEnum.INBOUND_RECEIVING.getCode().equals(item.getStatus()));
+		if (allReceived) {
+			//全部收货完成
+			wmsStockInOrders.setStatus(WarehouseDictEnum.INBOUND_RECEIVED.getCode());
+		} else {
+			//还在收货中
+			wmsStockInOrders.setStatus(WarehouseDictEnum.INBOUND_RECEIVING.getCode());
+		}
+		updateById(wmsStockInOrders);
+		return wmsStockInOrders.getStatus();
 	}
 }

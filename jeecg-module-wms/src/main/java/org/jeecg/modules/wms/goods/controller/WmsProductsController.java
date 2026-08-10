@@ -1,7 +1,12 @@
 package org.jeecg.modules.wms.goods.controller;
 
+import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.List;
+
+import com.alibaba.excel.EasyExcel;
+import com.xkcoding.http.support.Http;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.jeecg.common.api.vo.Result;
@@ -46,8 +51,10 @@ public class WmsProductsController extends JeecgController<WmsProducts, IWmsProd
 								   @RequestParam(name="pageSize", defaultValue="10") Integer pageSize,
 								   HttpServletRequest req) {
         QueryWrapper<WmsProducts> queryWrapper = QueryGenerator.initQueryWrapper(wmsProducts, req.getParameterMap());
-		Page<WmsProducts> page = new Page<WmsProducts>(pageNo, pageSize);
-		IPage<WmsProducts> pageList = wmsProductsService.page(page, queryWrapper);
+		IPage<WmsProducts> pageList = wmsProductsService.queryPageList(wmsProducts,
+            pageNo,
+            pageSize,
+            req);
 		return Result.OK(pageList);
 	}
 
@@ -99,10 +106,22 @@ public class WmsProductsController extends JeecgController<WmsProducts, IWmsProd
 
     @RequiresPermissions("goods:wms_products:exportXls")
     @RequestMapping(value = "/exportXls")
-    public ModelAndView exportXls(HttpServletRequest request, WmsProducts wmsProducts) {
-		return super.exportXls(request, wmsProducts, WmsProducts.class, "商品信息");
-    }
+    public void exportXls(HttpServletRequest request, HttpServletResponse response, WmsProducts wmsProducts) throws IOException {
+		Result<IPage<WmsProducts>> iPageResult = this.queryPageList(wmsProducts, 1, 100, request);
+		List<WmsProducts> records = iPageResult.getResult().getRecords();
 
+		response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+		response.setCharacterEncoding("utf-8");
+		// 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+		String fileName = URLEncoder.encode("测试", "UTF-8").replaceAll("\\+", "%20");
+		response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+
+            EasyExcel.write(response.getOutputStream(), WmsProducts.class).sheet("模板").doWrite(records);
+    
+    }
+/*
+导入
+ */
     @RequiresPermissions("goods:wms_products:importExcel")
     @RequestMapping(value = "/importExcel", method = RequestMethod.POST)
     public Result<?> importExcel(HttpServletRequest request, HttpServletResponse response) {

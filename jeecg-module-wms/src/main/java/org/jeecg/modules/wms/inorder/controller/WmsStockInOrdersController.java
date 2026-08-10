@@ -204,11 +204,40 @@ public class WmsStockInOrdersController {
 	 */
 	@AutoLog(value = "入库单主表-提交审核")
 	@Operation(summary = "入库单主表-提交审核")
-	@RequiresPermissions("inorder:wms_stock_in_orders:submitAudit")
-	@PutMapping(value = "/submitAudit")
+	@RequestMapping(value = "/submitAudit", method = { RequestMethod.PUT, RequestMethod.POST })
 	public Result<String> submitAudit(@RequestParam(name = "id", required = true) String id) {
 		wmsStockInOrdersService.submitAudit(id);
 		return Result.OK("提交审核成功！");
+	}
+
+	/**
+	 * 审核通过
+	 *
+	 * @param id
+	 * @return
+	 */
+
+	@AutoLog(value = "入库单主表-审核通过")
+	@Operation(summary = "入库单主表-审核通过")
+	@RequestMapping(value = "/auditPass",method={RequestMethod.PUT,RequestMethod.POST})
+	public Result<String> auditPass(@RequestParam(name = "id",required = true) String id){
+		wmsStockInOrdersService.auditPass(id);
+		return Result.OK("审核通过成功！");
+	}
+
+	
+	/**
+	 * 审核不通过
+	 *
+	 * @param id
+	 * @return
+	 */
+	@AutoLog(value = "入库单主表-审核不通过")
+	@Operation(summary = "入库单主表-审核不通过")
+	@RequestMapping(value = "/auditReject", method = { RequestMethod.PUT, RequestMethod.POST })
+	public Result<String> auditReject(@RequestParam(name = "id", required = true) String id) {
+		wmsStockInOrdersService.auditReject(id);
+		return Result.OK("审核不通过成功！");
 	}
 
 	/**

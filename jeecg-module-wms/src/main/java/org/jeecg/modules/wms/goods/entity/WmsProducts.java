@@ -70,7 +70,7 @@ public class WmsProducts implements Serializable {
     /** 商品名称 */
     @Excel(name = "商品名称", width = 15)
     @Schema(description = "商品名称")
-    @ExcelProperty("商品名称")
+    @ExcelProperty(value="商品名称")
     private String productName;
     /** 货主id */
     @Excel(name = "货主id", width = 15)
@@ -107,21 +107,6 @@ public class WmsProducts implements Serializable {
     @Schema(description = "供应商条码")
     @ExcelProperty("供应商条码")
     private String supplierBarcode;
-    /** 宽 */
-    @Excel(name = "宽", width = 15)
-    @Schema(description = "宽")
-    @ExcelProperty("宽")
-    private Double width;
-    /** 长 */
-    @Excel(name = "长", width = 15)
-    @Schema(description = "长")
-    @ExcelProperty("长")
-    private Double length;
-    /** 高 */
-    @Excel(name = "高", width = 15)
-    @Schema(description = "高")
-    @ExcelProperty("高")
-    private Double height;
     /** 体积 */
     @Excel(name = "体积", width = 15)
     @Schema(description = "体积")
@@ -174,9 +159,11 @@ public class WmsProducts implements Serializable {
     @ExcelProperty("状态")
     private String status;
 
-    // 货主名称
+        // 货主名称
+    /** 货主名 */
+    @Excel(name = "货主", width = 15)
+    @Schema(description = "货主名")
     @TableField(exist = false)
-    @ExcelProperty("货主名称")
     private String ownerName;
 
     // 分类名称
@@ -185,12 +172,17 @@ public class WmsProducts implements Serializable {
     private String categoryName;
 
     // 商品图片
+    @Excel(name = "商品图片", width = 15)
     @TableField(exist = false)
     @ExcelIgnore
     private String productImgs;
 
     // 商品品牌名称
+    @Excel(name = "商品品牌", width = 15)
+    @Schema(description = "商品品牌")
+    @ExcelIgnore
     @TableField(exist = false)
     @ExcelProperty("商品品牌")
+
     private String productBrandName;
 }

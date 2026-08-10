@@ -1,4 +1,4 @@
-package org.jeecg.modules.wms.wmstask.controller;
+package org.jeecg.modules.wms.inventory.controller;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -14,8 +14,8 @@ import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.common.system.query.QueryRuleEnum;
 import org.jeecg.common.util.oConvertUtils;
-import org.jeecg.modules.wms.wmstask.entity.WmsTasks;
-import org.jeecg.modules.wms.wmstask.service.IWmsTasksService;
+import org.jeecg.modules.wms.inventory.entity.WmsInventory;
+import org.jeecg.modules.wms.inventory.service.IWmsInventoryService;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -40,68 +40,68 @@ import org.jeecg.common.aspect.annotation.AutoLog;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
  /**
- * @Description: 任务表
+ * @Description: 库存表
  * @Author: jeecg-boot
- * @Date:   2026-07-23
+ * @Date:   2026-07-30
  * @Version: V1.0
  */
-@Tag(name="任务表")
+@Tag(name="库存表")
 @RestController
-@RequestMapping("/wmstask/wmsTasks")
+@RequestMapping("/inventory/wmsInventory")
 @Slf4j
-public class WmsTasksController extends JeecgController<WmsTasks, IWmsTasksService> {
+public class WmsInventoryController extends JeecgController<WmsInventory, IWmsInventoryService> {
 	@Autowired
-	private IWmsTasksService wmsTasksService;
+	private IWmsInventoryService wmsInventoryService;
 	
 	/**
 	 * 分页列表查询
 	 *
-	 * @param wmsTasks
+	 * @param wmsInventory
 	 * @param pageNo
 	 * @param pageSize
 	 * @param req
 	 * @return
 	 */
-	//@AutoLog(value = "任务表-分页列表查询")
-	@Operation(summary="任务表-分页列表查询")
+	//@AutoLog(value = "库存表-分页列表查询")
+	@Operation(summary="库存表-分页列表查询")
 	@GetMapping(value = "/list")
-	public Result<IPage<WmsTasks>> queryPageList(WmsTasks wmsTasks,
+	public Result<IPage<WmsInventory>> queryPageList(WmsInventory wmsInventory,
 								   @RequestParam(name="pageNo", defaultValue="1") Integer pageNo,
 								   @RequestParam(name="pageSize", defaultValue="10") Integer pageSize,
 								   HttpServletRequest req) {
-        QueryWrapper<WmsTasks> queryWrapper = QueryGenerator.initQueryWrapper(wmsTasks, req.getParameterMap());
-		Page<WmsTasks> page = new Page<WmsTasks>(pageNo, pageSize);
-		IPage<WmsTasks> pageList = wmsTasksService.page(page, queryWrapper);
+        QueryWrapper<WmsInventory> queryWrapper = QueryGenerator.initQueryWrapper(wmsInventory, req.getParameterMap());
+		Page<WmsInventory> page = new Page<WmsInventory>(pageNo, pageSize);
+		IPage<WmsInventory> pageList = wmsInventoryService.page(page, queryWrapper);
 		return Result.OK(pageList);
 	}
 	
 	/**
 	 *   添加
 	 *
-	 * @param wmsTasks
+	 * @param wmsInventory
 	 * @return
 	 */
-	@AutoLog(value = "任务表-添加")
-	@Operation(summary="任务表-添加")
-	@RequiresPermissions("wmstask:wms_tasks:add")
+	@AutoLog(value = "库存表-添加")
+	@Operation(summary="库存表-添加")
+	@RequiresPermissions("inventory:wms_inventory:add")
 	@PostMapping(value = "/add")
-	public Result<String> add(@RequestBody WmsTasks wmsTasks) {
-		wmsTasksService.save(wmsTasks);
+	public Result<String> add(@RequestBody WmsInventory wmsInventory) {
+		wmsInventoryService.save(wmsInventory);
 		return Result.OK("添加成功！");
 	}
 	
 	/**
 	 *  编辑
 	 *
-	 * @param wmsTasks
+	 * @param wmsInventory
 	 * @return
 	 */
-	@AutoLog(value = "任务表-编辑")
-	@Operation(summary="任务表-编辑")
-	@RequiresPermissions("wmstask:wms_tasks:edit")
+	@AutoLog(value = "库存表-编辑")
+	@Operation(summary="库存表-编辑")
+	@RequiresPermissions("inventory:wms_inventory:edit")
 	@RequestMapping(value = "/edit", method = {RequestMethod.PUT,RequestMethod.POST})
-	public Result<String> edit(@RequestBody WmsTasks wmsTasks) {
-		wmsTasksService.updateById(wmsTasks);
+	public Result<String> edit(@RequestBody WmsInventory wmsInventory) {
+		wmsInventoryService.updateById(wmsInventory);
 		return Result.OK("编辑成功!");
 	}
 	
@@ -111,12 +111,12 @@ public class WmsTasksController extends JeecgController<WmsTasks, IWmsTasksServi
 	 * @param id
 	 * @return
 	 */
-	@AutoLog(value = "任务表-通过id删除")
-	@Operation(summary="任务表-通过id删除")
-	@RequiresPermissions("wmstask:wms_tasks:delete")
+	@AutoLog(value = "库存表-通过id删除")
+	@Operation(summary="库存表-通过id删除")
+	@RequiresPermissions("inventory:wms_inventory:delete")
 	@DeleteMapping(value = "/delete")
 	public Result<String> delete(@RequestParam(name="id",required=true) String id) {
-		wmsTasksService.removeById(id);
+		wmsInventoryService.removeById(id);
 		return Result.OK("删除成功!");
 	}
 	
@@ -126,12 +126,12 @@ public class WmsTasksController extends JeecgController<WmsTasks, IWmsTasksServi
 	 * @param ids
 	 * @return
 	 */
-	@AutoLog(value = "任务表-批量删除")
-	@Operation(summary="任务表-批量删除")
-	@RequiresPermissions("wmstask:wms_tasks:deleteBatch")
+	@AutoLog(value = "库存表-批量删除")
+	@Operation(summary="库存表-批量删除")
+	@RequiresPermissions("inventory:wms_inventory:deleteBatch")
 	@DeleteMapping(value = "/deleteBatch")
 	public Result<String> deleteBatch(@RequestParam(name="ids",required=true) String ids) {
-		this.wmsTasksService.removeByIds(Arrays.asList(ids.split(",")));
+		this.wmsInventoryService.removeByIds(Arrays.asList(ids.split(",")));
 		return Result.OK("批量删除成功!");
 	}
 	
@@ -141,27 +141,27 @@ public class WmsTasksController extends JeecgController<WmsTasks, IWmsTasksServi
 	 * @param id
 	 * @return
 	 */
-	//@AutoLog(value = "任务表-通过id查询")
-	@Operation(summary="任务表-通过id查询")
+	//@AutoLog(value = "库存表-通过id查询")
+	@Operation(summary="库存表-通过id查询")
 	@GetMapping(value = "/queryById")
-	public Result<WmsTasks> queryById(@RequestParam(name="id",required=true) String id) {
-		WmsTasks wmsTasks = wmsTasksService.getById(id);
-		if(wmsTasks==null) {
+	public Result<WmsInventory> queryById(@RequestParam(name="id",required=true) String id) {
+		WmsInventory wmsInventory = wmsInventoryService.getById(id);
+		if(wmsInventory==null) {
 			return Result.error("未找到对应数据");
 		}
-		return Result.OK(wmsTasks);
+		return Result.OK(wmsInventory);
 	}
 
     /**
     * 导出excel
     *
     * @param request
-    * @param wmsTasks
+    * @param wmsInventory
     */
-    @RequiresPermissions("wmstask:wms_tasks:exportXls")
+    @RequiresPermissions("inventory:wms_inventory:exportXls")
     @RequestMapping(value = "/exportXls")
-    public ModelAndView exportXls(HttpServletRequest request, WmsTasks wmsTasks) {
-        return super.exportXls(request, wmsTasks, WmsTasks.class, "任务表");
+    public ModelAndView exportXls(HttpServletRequest request, WmsInventory wmsInventory) {
+        return super.exportXls(request, wmsInventory, WmsInventory.class, "库存表");
     }
 
     /**
@@ -171,10 +171,10 @@ public class WmsTasksController extends JeecgController<WmsTasks, IWmsTasksServi
     * @param response
     * @return
     */
-    @RequiresPermissions("wmstask:wms_tasks:importExcel")
+    @RequiresPermissions("inventory:wms_inventory:importExcel")
     @RequestMapping(value = "/importExcel", method = RequestMethod.POST)
     public Result<?> importExcel(HttpServletRequest request, HttpServletResponse response) {
-        return super.importExcel(request, response, WmsTasks.class);
+        return super.importExcel(request, response, WmsInventory.class);
     }
 
 }
