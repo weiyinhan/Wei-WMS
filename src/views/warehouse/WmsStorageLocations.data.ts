@@ -34,35 +34,15 @@ export const columns: BasicColumn[] = [
       return render.renderDict(text, 'wms_status');
     },
   },
-  // {
-  //  title: '所属仓库',
-  //  align:"center",
-  //  dataIndex: 'warehouseId'
-  // },
   {
     title: '所属仓库',
     align: 'center',
-    dataIndex: 'warehouse.warehouseName',
-    customRender: ({ record }) => {
-      if (record.warehouse) {
-        return record.warehouse.warehouseName;
-      }
-    },
+    dataIndex: 'warehouseName',
   },
-  // {
-  //  title: '所属库区',
-  //  align:"center",
-  //  dataIndex: 'zoneId'
-  // },
   {
     title: '所属库区',
     align: 'center',
-    dataIndex: 'storageZones.zoneName',
-    customRender: ({ record }) => {
-      if (record.storageZones) {
-        return record.storageZones.zoneName;
-      }
-    },
+    dataIndex: 'zoneName',
   },
   {
     title: '巷道',
