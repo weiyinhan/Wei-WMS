@@ -22,7 +22,7 @@ import org.jeecg.modules.wms.inorder.service.impl.WmsStockInOrdersServiceImpl;
 import org.jeecg.modules.wms.inventory.service.impl.WmsInventoryTransByPutway;
 import org.jeecg.modules.wms.inventory.service.impl.WmsInventoryTransByReceiving;
 import org.jeecg.common.util.RedisUtil;
-import org.jeecg.modules.wms.vo.WmsInventoryTransParam;
+import org.jeecg.modules.wms.inventory.vo.WmsInventoryTransParam;
 
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;

@@ -12,7 +12,7 @@ import org.jeecg.modules.wms.inventory.entity.WmsInventoryTrans;
 import org.jeecg.modules.wms.inventory.mapper.WmsInventoryTransMapper;
 import org.jeecg.modules.wms.inventory.service.IWmsInventoryService;
 import org.jeecg.modules.wms.inventory.service.IWmsInventoryTransService;
-import org.jeecg.modules.wms.vo.WmsInventoryTransParam;
+import org.jeecg.modules.wms.inventory.vo.WmsInventoryTransParam;
 import org.jeecg.modules.wms.warehouse.entity.WmsStorageLocations;
 import org.jeecg.modules.wms.warehouse.service.IWmsStorageLocationsService;
 import org.jeecg.modules.wms.warehouse.service.IWmsStorageZonesService;

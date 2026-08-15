@@ -1,5 +1,6 @@
 package org.jeecg.modules.wms.inventory.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.commons.lang3.StringUtils;
@@ -10,7 +11,11 @@ import org.jeecg.modules.wms.inventory.entity.WmsInventoryTrans;
 import org.jeecg.modules.wms.inventory.mapper.WmsInventoryTransMapper;
 import org.jeecg.modules.wms.inventory.service.IWmsInventoryService;
 import org.jeecg.modules.wms.inventory.service.IWmsInventoryTransService;
-import org.jeecg.modules.wms.vo.WmsInventoryTransParam;
+import org.jeecg.modules.wms.inventory.vo.WmsInventoryTransParam;
+import org.jeecg.modules.wms.warehouse.entity.WmsStorageLocations;
+import org.jeecg.modules.wms.warehouse.service.IWmsStorageLocationsService;
+import org.jeecg.modules.wms.warehouse.service.IWmsStorageZonesService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -78,6 +83,16 @@ public class WmsInventoryTransByDeliver extends ServiceImpl<WmsInventoryTransMap
             //抛出异常
             throw new RuntimeException("更新库存失败");
         }
+        //插入库存变更表
+        WmsInventoryTrans wmsInventoryTrans = new WmsInventoryTrans();
+        wmsInventoryTrans.setProductId(inventoryTransParam.getProductId());
+        wmsInventoryTrans.setLocationCode(inventoryTransParam.getSourceLocationCode());
+//        wmsInventoryTrans.setBatchNumber(inventoryTransParam.getBatchNumber());
+        wmsInventoryTrans.setChangeQuantity(inventoryTransParam.getExecQuantity()*-1);
+        wmsInventoryTrans.setTransactionType(inventoryTransParam.getTransactionType());
+        wmsInventoryTrans.setRemarks(inventoryTransParam.getRemarks());
+        wmsInventoryTrans.setTransactionTime(new Date());
+        save(wmsInventoryTrans);
 
     }
 }

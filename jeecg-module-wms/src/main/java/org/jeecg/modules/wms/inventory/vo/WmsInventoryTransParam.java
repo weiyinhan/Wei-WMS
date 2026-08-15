@@ -1,4 +1,4 @@
-package org.jeecg.modules.wms.vo;
+package org.jeecg.modules.wms.inventory.vo;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -32,7 +32,7 @@ public class WmsInventoryTransParam {
     /**仓库id*/
     @Excel(name = "仓库id", width = 15)
     @Schema(description = "仓库id")
-    private java.lang.String warehouseId;
+    private String warehouseId;
     /**来源储位编码*/
     @Excel(name = "来源储位编码", width = 15)
     @Schema(description = "来源储位编码")
@@ -72,7 +72,7 @@ public class WmsInventoryTransParam {
     @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
     @Schema(description = "执行时间")
     private Date operationTime;
-    
+
     /**是否可售 is_sellable*/
     @Excel(name = "是否可售 is_sellable", width = 15)
     @Schema(description = "是否可售 is_sellable")

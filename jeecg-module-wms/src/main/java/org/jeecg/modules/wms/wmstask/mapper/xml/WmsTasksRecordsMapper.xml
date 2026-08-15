@@ -2,4 +2,34 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.jeecg.modules.wms.wmstask.mapper.WmsTasksRecordsMapper">
 
+    <select id="queryRecordsList" parameterType="org.jeecg.modules.wms.wmstask.entity.WmsTasksRecords" resultType="org.jeecg.modules.wms.wmstask.entity.WmsTasksRecords">
+        select wtr.*, wsio.order_number as stockInOrderNumber, ww.warehouse_name as warehouseName,
+               wco.owner_name as ownerName, wp.product_name as productName
+        from wms_tasks_records wtr
+                 left join wms_tasks wt on wtr.task_id = wt.id
+                 left join wms_stock_in_orders wsio on wtr.stock_in_order_id = wsio.id
+                 left join wms_warehouses ww on wt.target_warehouse_id = ww.id
+                 left join wms_products wp on wtr.product_id = wp.id
+                 left join wms_cargo_owners wco on wp.owner_id = wco.id
+        where 1=1
+        <if test="taskNumber != null and taskNumber != ''">
+            and wtr.task_number = #{taskNumber}
+        </if>
+        <if test="taskType != null and taskType != ''">
+            and wtr.task_type = #{taskType}
+        </if>
+        <if test="operator != null and operator != ''">
+            and wtr.operator = #{operator}
+        </if>
+        <if test="stockInOrderId != null and stockInOrderId != ''">
+            and wtr.stock_in_order_id = #{stockInOrderId}
+        </if>
+        <if test="waveOrderId != null and waveOrderId != ''">
+            and wtr.wave_order_id = #{waveOrderId}
+        </if>
+        <if test="outOrderId != null and outOrderId != ''">
+            and wtr.out_order_id = #{outOrderId}
+        </if>
+        order by wtr.create_time desc
+    </select>
 </mapper>

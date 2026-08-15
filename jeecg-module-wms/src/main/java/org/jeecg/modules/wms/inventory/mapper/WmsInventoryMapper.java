@@ -9,9 +9,12 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 /**
  * @Description: 库存表
  * @Author: jeecg-boot
- * @Date:   2026-07-30
+ * @Date:   2025-08-30
  * @Version: V1.0
  */
 public interface WmsInventoryMapper extends BaseMapper<WmsInventory> {
-
+    /**
+     * 综合查询库存列表
+     */
+    public List<WmsInventory> queryList(WmsInventory wmsInventory);
 }

@@ -5,6 +5,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.math.BigDecimal;
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.TableLogic;
@@ -44,68 +45,90 @@ public class WmsInventory implements Serializable {
 	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
     @Schema(description = "创建日期")
-    private java.util.Date createTime;
+    private Date createTime;
 	/**更新人*/
     @Schema(description = "更新人")
-    private java.lang.String updateBy;
+    private String updateBy;
 	/**更新日期*/
 	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
     @Schema(description = "更新日期")
-    private java.util.Date updateTime;
+    private Date updateTime;
 	/**所属部门*/
     @Schema(description = "所属部门")
-    private java.lang.String sysOrgCode;
+    private String sysOrgCode;
+	/**删除状态*/
+	@TableLogic
+    @Schema(description = "删除状态")
+    private Integer delFlag;
 	/**商品id*/
 	@Excel(name = "商品id", width = 15)
     @Schema(description = "商品id")
-    private java.lang.String productId;
+    private String productId;
+	/**仓库id*/
+	@Excel(name = "仓库id", width = 15)
+    @Schema(description = "仓库id")
+    private String warehouseId;
 	/**储位编码*/
 	@Excel(name = "储位编码", width = 15)
     @Schema(description = "储位编码")
-    private java.lang.String locationCode;
+    private String locationCode;
 	/**容器编码*/
 	@Excel(name = "容器编码", width = 15)
     @Schema(description = "容器编码")
-    private java.lang.String containerCode;
+    private String containerCode;
 	/**在库数量*/
 	@Excel(name = "在库数量", width = 15)
     @Schema(description = "在库数量")
-    private java.lang.Integer stockQuantity;
+    private Integer stockQuantity;
 	/**分配数量*/
 	@Excel(name = "分配数量", width = 15)
     @Schema(description = "分配数量")
-    private java.lang.Integer allocatedQuantity;
+    private Integer allocatedQuantity;
 	/**可用数量*/
 	@Excel(name = "可用数量", width = 15)
     @Schema(description = "可用数量")
-    private java.lang.Integer availableQuantity;
+    private Integer availableQuantity;
 	/**批号 */
 	@Excel(name = "批号 ", width = 15)
     @Schema(description = "批号 ")
-    private java.lang.String batchNumber;
+    private String batchNumber;
 	/**入库时间*/
 	@Excel(name = "入库时间", width = 20, format = "yyyy-MM-dd HH:mm:ss")
 	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
     @Schema(description = "入库时间")
-    private java.util.Date stockInTime;
+    private Date stockInTime;
 	/**保质期到期日*/
 	@Excel(name = "保质期到期日", width = 15, format = "yyyy-MM-dd")
 	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd")
     @DateTimeFormat(pattern="yyyy-MM-dd")
     @Schema(description = "保质期到期日")
-    private java.util.Date expiryDate;
+    private Date expiryDate;
 	/**货主*/
 	@Excel(name = "货主", width = 15)
     @Schema(description = "货主")
-    private java.lang.String ownerId;
+    private String ownerId;
 	/**是否可售*/
-	@Excel(name = "是否可售", width = 15)
+	@Excel(name = "是否可售", width = 15, dicCode = "is_sellable")
+	@Dict(dicCode = "is_sellable")
     @Schema(description = "是否可售")
-    private java.lang.String isSellable;
-	/**仓库id*/
-	@Excel(name = "仓库id", width = 15)
-    @Schema(description = "仓库id")
-    private java.lang.String warehouseId;
+    private String isSellable;
+
+	/**商品名称*/
+	@Excel(name = "商品名称", width = 15)
+    @Schema(description = "商品名称")
+    @TableField(exist = false)
+    private String productName;
+	/**仓库名称*/
+	@Excel(name = "仓库名称", width = 15)
+    @Schema(description = "仓库名称")
+    @TableField(exist = false)
+    private String warehouseName;
+	/**货主名称*/
+	@Excel(name = "货主名称", width = 15)
+    @Schema(description = "货主名称")
+    @TableField(exist = false)
+    private String ownerName;
+
 }

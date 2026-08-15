@@ -1,21 +1,25 @@
 package org.jeecg.modules.wms.inventory.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import me.zhyd.oauth.utils.StringUtils;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
+import org.apache.commons.lang3.StringUtils;
 import org.jeecg.modules.wms.inventory.entity.WmsInventory;
-import org.jeecg.modules.wms.inventory.entity.WmsInventoryTrans;
 import org.jeecg.modules.wms.inventory.mapper.WmsInventoryMapper;
 import org.jeecg.modules.wms.inventory.service.IWmsInventoryService;
+import org.jeecg.modules.wms.outorder.entity.WmsOutOrdersItems;
 import org.springframework.stereotype.Service;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 
-import static dm.jdbc.b.i.eq;
+import java.util.List;
 
 /**
  * @Description: 库存表
  * @Author: jeecg-boot
- * @Date:   2026-07-30
+ * @Date:   2025-08-30
  * @Version: V1.0
  */
 @Service
@@ -23,43 +27,40 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
 
     @Override
     public WmsInventory getInventoryByUniqueKey(String productId, String locationCode, String batchNumber) {
-        //库存唯一，商品id，储位编码，批号
         LambdaQueryWrapper<WmsInventory> eq = new LambdaQueryWrapper<WmsInventory>()
-                        .eq(WmsInventory::getProductId,productId)
-                        .eq(WmsInventory::getLocationCode,locationCode)
-                        .eq(WmsInventory::getBatchNumber,batchNumber)
-                        .eq(StringUtils.isNotEmpty(batchNumber),WmsInventory::getBatchNumber,batchNumber)
-                        .eq(StringUtils.isEmpty(batchNumber),WmsInventory::getBatchNumber,"");;
-        return this.getOne(eq);
+                .eq(WmsInventory::getProductId, productId)
+                .eq(WmsInventory::getLocationCode, locationCode)
+                .eq(StringUtils.isNotEmpty(batchNumber),WmsInventory::getBatchNumber, batchNumber)
+                .eq(StringUtils.isEmpty(batchNumber),WmsInventory::getBatchNumber,"");
+        WmsInventory inventory = this.getOne(eq);
+
+        return inventory;
+    }
+
+    @Override
+    public IPage<WmsInventory> queryList(WmsInventory wmsInventory, Integer pageNo, Integer pageSize) {
+        //开启分页查询,当执行查询时，插件进行相关的sql拦截进行分页操作，返回一个page对象
+        Page<WmsInventory> page = PageHelper.startPage(pageNo, pageSize);
+        List<WmsInventory> list = baseMapper.queryList(wmsInventory);
+        PageDTO<WmsInventory> wmsInventoryPageDTO = new PageDTO<>();
+        wmsInventoryPageDTO.setRecords(list);
+        wmsInventoryPageDTO.setTotal(page.getTotal());
+        wmsInventoryPageDTO.setSize(page.getPageSize());
+        wmsInventoryPageDTO.setCurrent(page.getPageNum());
+        wmsInventoryPageDTO.setPages(page.getPages());
+        return wmsInventoryPageDTO;
+    }
+
+    @Override
+    public List<WmsInventory> selectAvailableBySku(String warehouseId, WmsOutOrdersItems skuItem) {
+        LambdaQueryWrapper<WmsInventory> wrapper = new LambdaQueryWrapper<WmsInventory>()
+                .eq(WmsInventory::getProductId, skuItem.getSkuId())
+                .eq(WmsInventory::getWarehouseId, warehouseId)
+                .eq(StringUtils.isNotEmpty(skuItem.getBatchNumber()), WmsInventory::getBatchNumber, skuItem.getBatchNumber())
+                .eq(WmsInventory::getIsSellable, "1")
+                .gt(WmsInventory::getAvailableQuantity, 0)
+                .orderByAsc(WmsInventory::getExpiryDate)
+                .orderByAsc(WmsInventory::getStockInTime);
+        return this.list(wrapper);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

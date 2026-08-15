@@ -42,7 +42,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
  /**
  * @Description: 库存表
  * @Author: jeecg-boot
- * @Date:   2026-07-30
+ * @Date:   2025-08-30
  * @Version: V1.0
  */
 @Tag(name="库存表")
@@ -52,7 +52,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 public class WmsInventoryController extends JeecgController<WmsInventory, IWmsInventoryService> {
 	@Autowired
 	private IWmsInventoryService wmsInventoryService;
-	
+
 	/**
 	 * 分页列表查询
 	 *
@@ -69,12 +69,10 @@ public class WmsInventoryController extends JeecgController<WmsInventory, IWmsIn
 								   @RequestParam(name="pageNo", defaultValue="1") Integer pageNo,
 								   @RequestParam(name="pageSize", defaultValue="10") Integer pageSize,
 								   HttpServletRequest req) {
-        QueryWrapper<WmsInventory> queryWrapper = QueryGenerator.initQueryWrapper(wmsInventory, req.getParameterMap());
-		Page<WmsInventory> page = new Page<WmsInventory>(pageNo, pageSize);
-		IPage<WmsInventory> pageList = wmsInventoryService.page(page, queryWrapper);
-		return Result.OK(pageList);
+		IPage<WmsInventory> wmsInventoryIPage = wmsInventoryService.queryList(wmsInventory, pageNo, pageSize);
+		return Result.OK(wmsInventoryIPage);
 	}
-	
+
 	/**
 	 *   添加
 	 *
@@ -89,7 +87,7 @@ public class WmsInventoryController extends JeecgController<WmsInventory, IWmsIn
 		wmsInventoryService.save(wmsInventory);
 		return Result.OK("添加成功！");
 	}
-	
+
 	/**
 	 *  编辑
 	 *
@@ -104,7 +102,7 @@ public class WmsInventoryController extends JeecgController<WmsInventory, IWmsIn
 		wmsInventoryService.updateById(wmsInventory);
 		return Result.OK("编辑成功!");
 	}
-	
+
 	/**
 	 *   通过id删除
 	 *
@@ -119,7 +117,7 @@ public class WmsInventoryController extends JeecgController<WmsInventory, IWmsIn
 		wmsInventoryService.removeById(id);
 		return Result.OK("删除成功!");
 	}
-	
+
 	/**
 	 *  批量删除
 	 *
@@ -134,7 +132,7 @@ public class WmsInventoryController extends JeecgController<WmsInventory, IWmsIn
 		this.wmsInventoryService.removeByIds(Arrays.asList(ids.split(",")));
 		return Result.OK("批量删除成功!");
 	}
-	
+
 	/**
 	 * 通过id查询
 	 *

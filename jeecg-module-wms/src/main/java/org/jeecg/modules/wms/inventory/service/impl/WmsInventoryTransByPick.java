@@ -11,7 +11,7 @@ import org.jeecg.modules.wms.inventory.entity.WmsInventoryTrans;
 import org.jeecg.modules.wms.inventory.mapper.WmsInventoryTransMapper;
 import org.jeecg.modules.wms.inventory.service.IWmsInventoryService;
 import org.jeecg.modules.wms.inventory.service.IWmsInventoryTransService;
-import org.jeecg.modules.wms.vo.WmsInventoryTransParam;
+import org.jeecg.modules.wms.inventory.vo.WmsInventoryTransParam;
 import org.jeecg.modules.wms.warehouse.entity.WmsStorageLocations;
 import org.jeecg.modules.wms.warehouse.service.IWmsStorageLocationsService;
 import org.jeecg.modules.wms.warehouse.service.IWmsStorageZonesService;
@@ -92,6 +92,16 @@ public class WmsInventoryTransByPick extends ServiceImpl<WmsInventoryTransMapper
             //抛出异常
             throw new RuntimeException("更新库存失败");
         }
+        //插入库存变更表
+        WmsInventoryTrans wmsInventoryTrans = new WmsInventoryTrans();
+        wmsInventoryTrans.setProductId(inventoryTransParam.getProductId());
+        wmsInventoryTrans.setLocationCode(inventoryTransParam.getSourceLocationCode());
+        wmsInventoryTrans.setBatchNumber(inventoryTransParam.getBatchNumber());
+        wmsInventoryTrans.setChangeQuantity(inventoryTransParam.getExecQuantity()*-1);
+        wmsInventoryTrans.setTransactionType(inventoryTransParam.getTransactionType());
+        wmsInventoryTrans.setRemarks(inventoryTransParam.getRemarks());
+        wmsInventoryTrans.setTransactionTime(new Date());
+        save(wmsInventoryTrans);
         //===================目标储位增加库存=====================
         /**
          * 新储位(拣货储位)：
@@ -135,5 +145,15 @@ public class WmsInventoryTransByPick extends ServiceImpl<WmsInventoryTransMapper
             wmsInventoryService.update(null,wmsInventoryLambdaUpdateWrapper2);
 
         }
+        //插入库存变更表
+        WmsInventoryTrans wmsInventoryTrans2 = new WmsInventoryTrans();
+        wmsInventoryTrans2.setProductId(inventoryTransParam.getProductId());
+        wmsInventoryTrans2.setLocationCode(inventoryTransParam.getTargetLocationCode());
+        wmsInventoryTrans2.setBatchNumber(inventoryTransParam.getBatchNumber());
+        wmsInventoryTrans2.setChangeQuantity(inventoryTransParam.getExecQuantity());
+        wmsInventoryTrans2.setTransactionType(inventoryTransParam.getTransactionType());
+        wmsInventoryTrans2.setRemarks(inventoryTransParam.getRemarks());
+        wmsInventoryTrans2.setTransactionTime(new Date());
+        save(wmsInventoryTrans2);
     }
 }

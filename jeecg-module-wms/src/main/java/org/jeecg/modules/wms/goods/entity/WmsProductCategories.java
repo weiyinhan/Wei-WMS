@@ -33,26 +33,26 @@ public class WmsProductCategories implements Serializable {
 	/**主键*/
 	@TableId(type = IdType.ASSIGN_ID)
     @Schema(description = "主键")
-    private java.lang.String id;
+    private String id;
 	/**创建人*/
     @Schema(description = "创建人")
-    private java.lang.String createBy;
+    private String createBy;
 	/**创建日期*/
 	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
     @Schema(description = "创建日期")
-    private java.util.Date createTime;
+    private Date createTime;
 	/**更新人*/
     @Schema(description = "更新人")
-    private java.lang.String updateBy;
+    private String updateBy;
 	/**更新日期*/
 	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
     @Schema(description = "更新日期")
-    private java.util.Date updateTime;
+    private Date updateTime;
 	/**所属部门*/
     @Schema(description = "所属部门")
-    private java.lang.String sysOrgCode;
+    private String sysOrgCode;
 	/**删除状态*/
 	@TableLogic
     @Schema(description = "删除状态")
@@ -60,23 +60,23 @@ public class WmsProductCategories implements Serializable {
 	/**类别名称*/
 	@Excel(name = "类别名称", width = 15)
     @Schema(description = "类别名称")
-    private java.lang.String categoryName;
+    private String categoryName;
 	/**父节点*/
 	@Excel(name = "父节点", width = 15)
     @Schema(description = "父节点")
-    private java.lang.String parentId;
+    private String parentId;
 	/**状态 0-未启用 1-启用*/
 	@Excel(name = "状态 0-未启用 1-启用", width = 15, dicCode = "dict_item_status")
 	@Dict(dicCode = "dict_item_status")
     @Schema(description = "状态 0-未启用 1-启用")
-    private java.lang.String status;
+    private String status;
 	/**是否有子节点*/
 	@Excel(name = "是否有子节点", width = 15, dicCode = "yn")
 	@Dict(dicCode = "yn")
     @Schema(description = "是否有子节点")
-    private java.lang.String hasChild;
+    private String hasChild;
 	/**节点编码*/
 	@Excel(name = "节点编码", width = 15)
     @Schema(description = "节点编码")
-    private java.lang.String categoryCode;
+    private String categoryCode;
 }
