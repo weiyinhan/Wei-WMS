@@ -16,7 +16,7 @@ import java.io.UnsupportedEncodingException;
 /**
  * @Description: 入库单明细
  * @Author: jeecg-boot
- * @Date:   2026-07-20
+ * @Date:   2025-08-30
  * @Version: V1.0
  */
 @Schema(description="入库单明细")
@@ -79,14 +79,18 @@ public class WmsStockInOrderItems implements Serializable {
 	@Excel(name = "状态", width = 15)
     @Schema(description = "状态")
     private String status;
-    /**商品名称*/
-    @Excel(name = "商品名称", width = 15)
-    @Schema(description = "商品名称")
+
+    //商品名称
     @TableField(exist = false)
     private String productName;
-    /**商品编码*/
-    @Excel(name = "商品编码", width = 15)
-    @Schema(description = "商品编码")
+    //商品编码
     @TableField(exist = false)
     private String productCode;
+    //入库单号
+    @TableField(exist = false)
+    private String orderNumber;
+
+    //序号
+    @TableField(exist = false)
+    private Integer serialNumber;
 }

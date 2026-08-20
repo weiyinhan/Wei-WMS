@@ -7,26 +7,47 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 波次策略接口
+ * @author Mr.M
+ * @version 1.0
+ * @description 抽象策略类
+ * @date 2025/11/29 16:44
  */
 public abstract class IWaveStrategy {
-    
+
     /**
      * 下一个策略
      */
-    private IWaveStrategy nextStrategy;
+    protected IWaveStrategy nextStrategy;
 
+    /**
+     * 设置下一个策略
+     */
     public void setNextStrategy(IWaveStrategy nextStrategy) {
         this.nextStrategy = nextStrategy;
     }
 
+
     /**
-     * 创建波次
-     * @param orders 待处理的订单列表
-     * @param allocationsMap 订单分配明细映射
+     * 匹配订单，创建波次
+     *
+     * @param orders         订单列表
+     * @param allocationsMap 订单分配列表
      */
     abstract void process(List<WmsOutOrders> orders,
-                             Map<String, List<WmsOutOrdersAllocation>> allocationsMap);
+                          Map<String, List<WmsOutOrdersAllocation>> allocationsMap);
+
+
+    /**
+     * 执行下一个策略
+     */
+    protected void processNext(List<WmsOutOrders> orders,
+                               Map<String, List<WmsOutOrdersAllocation>> allocationsMap){
+        //如果orders不为空并且下一个策略不为空，则执行下一个策略
+        if (orders != null && orders.size()>0 && nextStrategy != null) {
+            nextStrategy.process(orders, allocationsMap);
+        }
+
+    }
 
     /**
      * 获取策略类型
@@ -44,12 +65,4 @@ public abstract class IWaveStrategy {
     public IWaveStrategy  next(){
         return nextStrategy;
     }
-    /**
-     * 执行下一个策略
-     */
-    public void processNext(List<WmsOutOrders> orders, Map<String, List<WmsOutOrdersAllocation>> allocationsMap) {
-        if (orders.size() > 0 && next() != null) {
-            next().process(orders, allocationsMap);
-        }
-    }    
 }

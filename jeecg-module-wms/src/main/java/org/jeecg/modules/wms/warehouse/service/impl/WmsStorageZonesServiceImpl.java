@@ -14,9 +14,9 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import java.util.List;
 
 /**
- * @Description: 储区表
+ * @Description: 库区表
  * @Author: jeecg-boot
- * @Date:   2026-07-11
+ * @Date:   2025-04-09
  * @Version: V1.0
  */
 @Service
@@ -24,17 +24,15 @@ public class WmsStorageZonesServiceImpl extends ServiceImpl<WmsStorageZonesMappe
 
     @Override
     public IPage<WmsStorageZones> queryList(WmsStorageZones wmsStorageZones, Integer pageNo, Integer pageSize) {
-        //设置分页参数
-        Page<WmsStorageZones> objects = PageHelper.startPage(pageNo, pageSize);
-        //当执行mapper时PageHelper会自动拼接分页sql
-        List<WmsStorageZones> wmsStorageZones1 = getBaseMapper().queryList(wmsStorageZones);
-        PageDTO<WmsStorageZones> objectPageDTO = new PageDTO<>();
-        objectPageDTO.setRecords(wmsStorageZones1);
-        objectPageDTO.setTotal(objects.getTotal());
-        objectPageDTO.setCurrent(pageNo);
-        objectPageDTO.setSize(pageSize);
-
-
-        return objectPageDTO;
+        //开启分页查询,当执行查询时，插件进行相关的sql拦截进行分页操作，返回一个page对象
+        Page<WmsStorageZones> page = PageHelper.startPage(pageNo, pageSize);
+        List<WmsStorageZones> list = baseMapper.queryList(wmsStorageZones);
+        PageDTO<WmsStorageZones> wmsStorageZonesPageDTO = new PageDTO<>();
+        wmsStorageZonesPageDTO.setRecords(list);
+        wmsStorageZonesPageDTO.setTotal(page.getTotal());
+        wmsStorageZonesPageDTO.setSize(page.getPageSize());
+        wmsStorageZonesPageDTO.setCurrent(page.getPageNum());
+        wmsStorageZonesPageDTO.setPages(page.getPages());
+        return wmsStorageZonesPageDTO;
     }
 }

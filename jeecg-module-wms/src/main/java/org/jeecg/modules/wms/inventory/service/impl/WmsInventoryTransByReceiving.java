@@ -94,7 +94,8 @@ public class WmsInventoryTransByReceiving extends ServiceImpl<WmsInventoryTransM
             LambdaUpdateWrapper<WmsInventory> wmsInventoryLambdaUpdateWrapper = new LambdaUpdateWrapper<WmsInventory>()
                     .eq(WmsInventory::getId, wmsInventoryDb.getId())
                     .setSql("stock_quantity=stock_quantity+{0}", inventoryTransParam.getExecQuantity())
-                    .setSql("available_quantity=available_quantity+{0}", inventoryTransParam.getExecQuantity());
+                    .setSql("available_quantity=available_quantity+{0}", inventoryTransParam.getExecQuantity())
+                    .setSql("stock_in_time={0}", inventoryTransParam.getOperationTime());
             wmsInventoryService.update(null,wmsInventoryLambdaUpdateWrapper);
 
         }

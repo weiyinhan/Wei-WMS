@@ -136,7 +136,8 @@ public class WmsInventoryTransByPutway extends ServiceImpl<WmsInventoryTransMapp
             LambdaUpdateWrapper<WmsInventory> wmsInventoryLambdaUpdateWrapper2 = new LambdaUpdateWrapper<WmsInventory>()
                     .eq(WmsInventory::getId, wmsInventoryDb.getId())
                     .setSql("stock_quantity=stock_quantity+{0}", inventoryTransParam.getExecQuantity())
-                    .setSql("1".equals(isSellable), "available_quantity=available_quantity+{0}", inventoryTransParam.getExecQuantity());
+                    .setSql("1".equals(isSellable), "available_quantity=available_quantity+{0}", inventoryTransParam.getExecQuantity())
+                    .setSql("stock_in_time={0}", inventoryTransParam.getOperationTime());
             boolean update1 = wmsInventoryService.update(null, wmsInventoryLambdaUpdateWrapper2);
             if (!update1) {
                 //抛出异常

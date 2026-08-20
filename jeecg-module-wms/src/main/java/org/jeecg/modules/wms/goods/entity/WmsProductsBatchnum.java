@@ -56,10 +56,6 @@ public class WmsProductsBatchnum implements Serializable {
 	/**所属部门*/
     @Schema(description = "所属部门")
     private String sysOrgCode;
-	/**删除状态*/
-	@TableLogic
-    @Schema(description = "删除状态")
-    private Integer delFlag;
 	/**货主id*/
 	@Excel(name = "货主id", width = 15)
     @Schema(description = "货主id")

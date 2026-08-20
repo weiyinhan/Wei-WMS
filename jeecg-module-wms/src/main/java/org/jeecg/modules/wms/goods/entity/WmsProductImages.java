@@ -57,10 +57,6 @@ public class WmsProductImages implements Serializable {
 	/**所属部门*/
     @Schema(description = "所属部门")
     private String sysOrgCode;
-	/**删除状态*/
-	@TableLogic
-    @Schema(description = "删除状态")
-    private Integer delFlag;
 	/**商品id*/
 	@Excel(name = "商品id", width = 15)
     @Schema(description = "商品id")

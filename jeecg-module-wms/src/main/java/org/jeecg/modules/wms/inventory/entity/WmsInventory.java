@@ -4,11 +4,8 @@ import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.math.BigDecimal;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.annotation.TableLogic;
+
+import com.baomidou.mybatisplus.annotation.*;
 import org.jeecg.common.constant.ProvinceCityArea;
 import org.jeecg.common.util.SpringContextUtils;
 import lombok.Data;
@@ -23,7 +20,7 @@ import lombok.experimental.Accessors;
 /**
  * @Description: 库存表
  * @Author: jeecg-boot
- * @Date:   2026-07-30
+ * @Date:   2025-08-30
  * @Version: V1.0
  */
 @Data
@@ -57,18 +54,10 @@ public class WmsInventory implements Serializable {
 	/**所属部门*/
     @Schema(description = "所属部门")
     private String sysOrgCode;
-	/**删除状态*/
-	@TableLogic
-    @Schema(description = "删除状态")
-    private Integer delFlag;
 	/**商品id*/
 	@Excel(name = "商品id", width = 15)
     @Schema(description = "商品id")
     private String productId;
-	/**仓库id*/
-	@Excel(name = "仓库id", width = 15)
-    @Schema(description = "仓库id")
-    private String warehouseId;
 	/**储位编码*/
 	@Excel(name = "储位编码", width = 15)
     @Schema(description = "储位编码")
@@ -110,25 +99,88 @@ public class WmsInventory implements Serializable {
     @Schema(description = "货主")
     private String ownerId;
 	/**是否可售*/
-	@Excel(name = "是否可售", width = 15, dicCode = "is_sellable")
-	@Dict(dicCode = "is_sellable")
+	@Excel(name = "是否可售", width = 15)
     @Schema(description = "是否可售")
     private String isSellable;
+	/**仓库id*/
+	@Excel(name = "仓库id", width = 15)
+    @Schema(description = "仓库id")
+    private String warehouseId;
 
-	/**商品名称*/
-	@Excel(name = "商品名称", width = 15)
-    @Schema(description = "商品名称")
-    @TableField(exist = false)
-    private String productName;
-	/**仓库名称*/
-	@Excel(name = "仓库名称", width = 15)
-    @Schema(description = "仓库名称")
-    @TableField(exist = false)
-    private String warehouseName;
-	/**货主名称*/
-	@Excel(name = "货主名称", width = 15)
+
+    /**
+     * 货主名称
+     */
+    @Excel(name = "货主名称", width = 15)
     @Schema(description = "货主名称")
     @TableField(exist = false)
     private String ownerName;
+    /**
+     * 货主编码
+     */
+    @Excel(name = "货主编码", width = 15)
+    @Schema(description = "货主编码")
+    @TableField(exist = false)
+    private String ownerCode;
 
+    /**
+     * 商品名称
+     */
+    @Excel(name = "商品名称", width = 15)
+    @Schema(description = "商品名称")
+    @TableField(exist = false)
+    private String productName;
+
+    /**
+     * 商品编码
+     */
+    @Excel(name = "商品编码", width = 15)
+    @Schema(description = "商品编码")
+    @TableField(exist = false)
+    private String productCode;
+
+    /**
+     * 储位类别
+     */
+    @Excel(name = "储位类别", width = 15)
+    @Schema(description = "储位类别")
+    @TableField(exist = false)
+    private String locationCategory;
+
+    /**
+     * 储区名称
+     */
+    @Excel(name = "储区名称", width = 15)
+    @Schema(description = "储区名称")
+    @TableField(exist = false)
+    private String zoneName;
+
+    /**
+     * 仓库名称
+     */
+    @Excel(name = "仓库名称", width = 15)
+    @Schema(description = "仓库名称")
+    @TableField(exist = false)
+    private String warehouseName;
+
+    @Excel(name = "仓库编码", width = 15)
+    @Schema(description = "仓库编码")
+    @TableField(exist = false)
+    private String warehouseCode;
+
+    /**储位类型*/
+    @Excel(name = "储位类型", width = 15)
+    @Schema(description = "储位类型")
+    @TableField(exist = false)
+    private String locationType;
+    /**储区编码*/
+    @Excel(name = "储区编码", width = 15)
+    @Schema(description = "储区编码")
+    @TableField(exist = false)
+    private String zoneCode;
+    /**储区类型*/
+    @Excel(name = "储区类型", width = 15)
+    @Schema(description = "储区类型")
+    @TableField(exist = false)
+    private String zoneType;
 }

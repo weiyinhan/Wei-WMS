@@ -28,7 +28,6 @@ import org.jeecg.modules.wms.inorder.entity.WmsStockInOrderItems;
 import org.jeecg.modules.wms.inorder.entity.WmsStockInOrders;
 import org.jeecg.modules.wms.inorder.vo.WmsStockInOrdersPage;
 import org.jeecg.modules.wms.inorder.service.IWmsStockInOrdersService;
-import org.jeecg.modules.wms.config.WarehouseDictEnum;
 import org.jeecg.modules.wms.inorder.service.IWmsStockInOrderItemsService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,13 +45,14 @@ import io.swagger.v3.oas.annotations.Operation;
 import org.jeecg.common.aspect.annotation.AutoLog;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
-/**
+
+ /**
  * @Description: 入库单主表
  * @Author: jeecg-boot
- * @Date: 2026-07-20
+ * @Date:   2025-08-30
  * @Version: V1.0
  */
-@Tag(name = "入库单主表")
+@Tag(name="入库单主表")
 @RestController
 @RequestMapping("/inorder/wmsStockInOrders")
 @Slf4j
@@ -61,10 +61,6 @@ public class WmsStockInOrdersController {
 	private IWmsStockInOrdersService wmsStockInOrdersService;
 	@Autowired
 	private IWmsStockInOrderItemsService wmsStockInOrderItemsService;
-	@Autowired
-	private org.jeecg.modules.wms.goods.service.IWmsCargoOwnersService wmsCargoOwnersService;
-	@Autowired
-	private org.jeecg.modules.wms.warehouse.service.IWmsWarehousesService wmsWarehousesService;
 
 	/**
 	 * 分页列表查询
@@ -75,105 +71,108 @@ public class WmsStockInOrdersController {
 	 * @param req
 	 * @return
 	 */
-	// @AutoLog(value = "入库单主表-分页列表查询")
-	@Operation(summary = "入库单主表-分页列表查询")
+	//@AutoLog(value = "入库单主表-分页列表查询")
+	@Operation(summary="入库单主表-分页列表查询")
 	@GetMapping(value = "/list")
 	public Result<IPage<WmsStockInOrders>> queryPageList(WmsStockInOrders wmsStockInOrders,
-			@RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
-			@RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
-			HttpServletRequest req) {
-		QueryWrapper<WmsStockInOrders> queryWrapper = QueryGenerator.initQueryWrapper(wmsStockInOrders,
-				req.getParameterMap());
+								   @RequestParam(name="pageNo", defaultValue="1") Integer pageNo,
+								   @RequestParam(name="pageSize", defaultValue="10") Integer pageSize,
+								   HttpServletRequest req) {
+        QueryWrapper<WmsStockInOrders> queryWrapper = QueryGenerator.initQueryWrapper(wmsStockInOrders, req.getParameterMap());
 		Page<WmsStockInOrders> page = new Page<WmsStockInOrders>(pageNo, pageSize);
 		IPage<WmsStockInOrders> pageList = wmsStockInOrdersService.page(page, queryWrapper);
-
-		for (WmsStockInOrders order : pageList.getRecords()) {
-			if (order.getOwnerId() != null) {
-				org.jeecg.modules.wms.goods.entity.WmsCargoOwners owner = wmsCargoOwnersService
-						.getById(order.getOwnerId());
-				if (owner != null) {
-					order.setOwnerName(owner.getOwnerName());
-				}
-			}
-			if (order.getWarehouseId() != null) {
-				org.jeecg.modules.wms.warehouse.entity.WmsWarehouses warehouse = wmsWarehousesService
-						.getById(order.getWarehouseId());
-				if (warehouse != null) {
-					order.setWarehouseName(warehouse.getWarehouseName());
-				}
-			}
-		}
-
 		return Result.OK(pageList);
 	}
 
 	/**
-	 * 添加
+	 *   添加
 	 *
 	 * @param wmsStockInOrdersPage
 	 * @return
 	 */
 	@AutoLog(value = "入库单主表-添加")
-	@Operation(summary = "入库单主表-添加")
-	@RequiresPermissions("inorder:wms_stock_in_orders:add")
+	@Operation(summary="入库单主表-添加")
+    @RequiresPermissions("inorder:wms_stock_in_orders:add")
 	@PostMapping(value = "/add")
 	public Result<String> add(@RequestBody WmsStockInOrdersPage wmsStockInOrdersPage) {
 		WmsStockInOrders wmsStockInOrders = new WmsStockInOrders();
 		BeanUtils.copyProperties(wmsStockInOrdersPage, wmsStockInOrders);
-		String orderNumber = wmsStockInOrdersService.generateOrderNumber(wmsStockInOrders);
-		wmsStockInOrders.setStatus(WarehouseDictEnum.INBOUND_INITIAL.getCode());
-		wmsStockInOrders.setOrderNumber(orderNumber);
-		wmsStockInOrdersService.saveMain(wmsStockInOrders, wmsStockInOrdersPage.getWmsStockInOrderItemsList());
+		wmsStockInOrdersService.add(wmsStockInOrders);
+//		wmsStockInOrdersService.saveMain(wmsStockInOrders, wmsStockInOrdersPage.getWmsStockInOrderItemsList());
 		return Result.OK("添加成功！");
 	}
 
 	/**
-	 * 编辑
+	 *  编辑
 	 *
 	 * @param wmsStockInOrdersPage
 	 * @return
 	 */
 	@AutoLog(value = "入库单主表-编辑")
-	@Operation(summary = "入库单主表-编辑")
-	@RequiresPermissions("inorder:wms_stock_in_orders:edit")
-	@RequestMapping(value = "/edit", method = { RequestMethod.PUT, RequestMethod.POST })
+	@Operation(summary="入库单主表-编辑")
+    @RequiresPermissions("inorder:wms_stock_in_orders:edit")
+	@RequestMapping(value = "/edit", method = {RequestMethod.PUT,RequestMethod.POST})
 	public Result<String> edit(@RequestBody WmsStockInOrdersPage wmsStockInOrdersPage) {
 		WmsStockInOrders wmsStockInOrders = new WmsStockInOrders();
 		BeanUtils.copyProperties(wmsStockInOrdersPage, wmsStockInOrders);
 		WmsStockInOrders wmsStockInOrdersEntity = wmsStockInOrdersService.getById(wmsStockInOrders.getId());
-		if (wmsStockInOrdersEntity == null) {
+		if(wmsStockInOrdersEntity==null) {
 			return Result.error("未找到对应数据");
 		}
 		wmsStockInOrdersService.updateMain(wmsStockInOrders, wmsStockInOrdersPage.getWmsStockInOrderItemsList());
 		return Result.OK("编辑成功!");
 	}
-
+	 /**
+	  * 提交审核
+	  */
+	 @AutoLog(value = "入库单主表-提交审核")
+	 @Operation(summary="入库单主表-提交审核")
+//	 @RequiresPermissions("inorder:wms_stock_in_orders:submitaudit")
+	 @PostMapping(value = "/submitAudit")
+	 public Result<String> submit(@RequestBody WmsStockInOrdersPage wmsStockInOrdersPage) {
+		 wmsStockInOrdersService.submitAudit(wmsStockInOrdersPage);
+		 return Result.OK("提交成功！");
+	 }
+	 /**
+	  *  审核
+	  *
+	  * @param wmsStockInOrdersPage
+	  * @return
+	  */
+	 @AutoLog(value = "入库单主表-审核")
+	 @Operation(summary="入库单主表-审核")
+	 @RequiresPermissions("inorder:wms_stock_in_orders:audit")
+	 @RequestMapping(value = "/audit", method = {RequestMethod.PUT,RequestMethod.POST})
+	 public Result<String> audit(@RequestBody WmsStockInOrdersPage wmsStockInOrdersPage) {
+		 wmsStockInOrdersService.audit(wmsStockInOrdersPage);
+		 return Result.OK("审核完成!");
+	 }
 	/**
-	 * 通过id删除
+	 *   通过id删除
 	 *
 	 * @param id
 	 * @return
 	 */
 	@AutoLog(value = "入库单主表-通过id删除")
-	@Operation(summary = "入库单主表-通过id删除")
-	@RequiresPermissions("inorder:wms_stock_in_orders:delete")
+	@Operation(summary="入库单主表-通过id删除")
+    @RequiresPermissions("inorder:wms_stock_in_orders:delete")
 	@DeleteMapping(value = "/delete")
-	public Result<String> delete(@RequestParam(name = "id", required = true) String id) {
+	public Result<String> delete(@RequestParam(name="id",required=true) String id) {
 		wmsStockInOrdersService.delMain(id);
 		return Result.OK("删除成功!");
 	}
 
 	/**
-	 * 批量删除
+	 *  批量删除
 	 *
 	 * @param ids
 	 * @return
 	 */
 	@AutoLog(value = "入库单主表-批量删除")
-	@Operation(summary = "入库单主表-批量删除")
-	@RequiresPermissions("inorder:wms_stock_in_orders:deleteBatch")
+	@Operation(summary="入库单主表-批量删除")
+    @RequiresPermissions("inorder:wms_stock_in_orders:deleteBatch")
 	@DeleteMapping(value = "/deleteBatch")
-	public Result<String> deleteBatch(@RequestParam(name = "ids", required = true) String ids) {
+	public Result<String> deleteBatch(@RequestParam(name="ids",required=true) String ids) {
 		this.wmsStockInOrdersService.delBatchMain(Arrays.asList(ids.split(",")));
 		return Result.OK("批量删除成功！");
 	}
@@ -184,60 +183,16 @@ public class WmsStockInOrdersController {
 	 * @param id
 	 * @return
 	 */
-	// @AutoLog(value = "入库单主表-通过id查询")
-	@Operation(summary = "入库单主表-通过id查询")
+	//@AutoLog(value = "入库单主表-通过id查询")
+	@Operation(summary="入库单主表-通过id查询")
 	@GetMapping(value = "/queryById")
-	public Result<WmsStockInOrders> queryById(@RequestParam(name = "id", required = true) String id) {
+	public Result<WmsStockInOrders> queryById(@RequestParam(name="id",required=true) String id) {
 		WmsStockInOrders wmsStockInOrders = wmsStockInOrdersService.getById(id);
-		if (wmsStockInOrders == null) {
+		if(wmsStockInOrders==null) {
 			return Result.error("未找到对应数据");
 		}
 		return Result.OK(wmsStockInOrders);
 
-	}
-
-	/**
-	 * 提交审核
-	 *
-	 * @param id
-	 * @return
-	 */
-	@AutoLog(value = "入库单主表-提交审核")
-	@Operation(summary = "入库单主表-提交审核")
-	@RequestMapping(value = "/submitAudit", method = { RequestMethod.PUT, RequestMethod.POST })
-	public Result<String> submitAudit(@RequestParam(name = "id", required = true) String id) {
-		wmsStockInOrdersService.submitAudit(id);
-		return Result.OK("提交审核成功！");
-	}
-
-	/**
-	 * 审核通过
-	 *
-	 * @param id
-	 * @return
-	 */
-
-	@AutoLog(value = "入库单主表-审核通过")
-	@Operation(summary = "入库单主表-审核通过")
-	@RequestMapping(value = "/auditPass",method={RequestMethod.PUT,RequestMethod.POST})
-	public Result<String> auditPass(@RequestParam(name = "id",required = true) String id){
-		wmsStockInOrdersService.auditPass(id);
-		return Result.OK("审核通过成功！");
-	}
-
-	
-	/**
-	 * 审核不通过
-	 *
-	 * @param id
-	 * @return
-	 */
-	@AutoLog(value = "入库单主表-审核不通过")
-	@Operation(summary = "入库单主表-审核不通过")
-	@RequestMapping(value = "/auditReject", method = { RequestMethod.PUT, RequestMethod.POST })
-	public Result<String> auditReject(@RequestParam(name = "id", required = true) String id) {
-		wmsStockInOrdersService.auditReject(id);
-		return Result.OK("审核不通过成功！");
 	}
 
 	/**
@@ -246,98 +201,94 @@ public class WmsStockInOrdersController {
 	 * @param id
 	 * @return
 	 */
-	// @AutoLog(value = "入库单明细通过主表ID查询")
-	@Operation(summary = "入库单明细主表ID查询")
+	//@AutoLog(value = "入库单明细通过主表ID查询")
+	@Operation(summary="入库单明细主表ID查询")
 	@GetMapping(value = "/queryWmsStockInOrderItemsByMainId")
-	public Result<List<WmsStockInOrderItems>> queryWmsStockInOrderItemsListByMainId(
-			@RequestParam(name = "id", required = true) String id) {
+	public Result<List<WmsStockInOrderItems>> queryWmsStockInOrderItemsListByMainId(@RequestParam(name="id",required=true) String id) {
 		List<WmsStockInOrderItems> wmsStockInOrderItemsList = wmsStockInOrderItemsService.selectByMainId(id);
 		return Result.OK(wmsStockInOrderItemsList);
 	}
 
-	/**
-	 * 导出excel
-	 *
-	 * @param request
-	 * @param wmsStockInOrders
-	 */
-	@RequiresPermissions("inorder:wms_stock_in_orders:exportXls")
-	@RequestMapping(value = "/exportXls")
-	public ModelAndView exportXls(HttpServletRequest request, WmsStockInOrders wmsStockInOrders) {
-		// Step.1 组装查询条件查询数据
-		QueryWrapper<WmsStockInOrders> queryWrapper = QueryGenerator.initQueryWrapper(wmsStockInOrders,
-				request.getParameterMap());
-		LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
+    /**
+    * 导出excel
+    *
+    * @param request
+    * @param wmsStockInOrders
+    */
+    @RequiresPermissions("inorder:wms_stock_in_orders:exportXls")
+    @RequestMapping(value = "/exportXls")
+    public ModelAndView exportXls(HttpServletRequest request, WmsStockInOrders wmsStockInOrders) {
+      // Step.1 组装查询条件查询数据
+      QueryWrapper<WmsStockInOrders> queryWrapper = QueryGenerator.initQueryWrapper(wmsStockInOrders, request.getParameterMap());
+      LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
 
-		// 配置选中数据查询条件
-		String selections = request.getParameter("selections");
-		if (oConvertUtils.isNotEmpty(selections)) {
-			List<String> selectionList = Arrays.asList(selections.split(","));
-			queryWrapper.in("id", selectionList);
-		}
-		// Step.2 获取导出数据
-		List<WmsStockInOrders> wmsStockInOrdersList = wmsStockInOrdersService.list(queryWrapper);
+      //配置选中数据查询条件
+      String selections = request.getParameter("selections");
+      if(oConvertUtils.isNotEmpty(selections)) {
+         List<String> selectionList = Arrays.asList(selections.split(","));
+         queryWrapper.in("id",selectionList);
+      }
+      //Step.2 获取导出数据
+      List<WmsStockInOrders> wmsStockInOrdersList = wmsStockInOrdersService.list(queryWrapper);
 
-		// Step.3 组装pageList
-		List<WmsStockInOrdersPage> pageList = new ArrayList<WmsStockInOrdersPage>();
-		for (WmsStockInOrders main : wmsStockInOrdersList) {
-			WmsStockInOrdersPage vo = new WmsStockInOrdersPage();
-			BeanUtils.copyProperties(main, vo);
-			List<WmsStockInOrderItems> wmsStockInOrderItemsList = wmsStockInOrderItemsService
-					.selectByMainId(main.getId());
-			vo.setWmsStockInOrderItemsList(wmsStockInOrderItemsList);
-			pageList.add(vo);
-		}
+      // Step.3 组装pageList
+      List<WmsStockInOrdersPage> pageList = new ArrayList<WmsStockInOrdersPage>();
+      for (WmsStockInOrders main : wmsStockInOrdersList) {
+          WmsStockInOrdersPage vo = new WmsStockInOrdersPage();
+          BeanUtils.copyProperties(main, vo);
+          List<WmsStockInOrderItems> wmsStockInOrderItemsList = wmsStockInOrderItemsService.selectByMainId(main.getId());
+          vo.setWmsStockInOrderItemsList(wmsStockInOrderItemsList);
+          pageList.add(vo);
+      }
 
-		// Step.4 AutoPoi 导出Excel
-		ModelAndView mv = new ModelAndView(new JeecgEntityExcelView());
-		mv.addObject(NormalExcelConstants.FILE_NAME, "入库单主表列表");
-		mv.addObject(NormalExcelConstants.CLASS, WmsStockInOrdersPage.class);
-		mv.addObject(NormalExcelConstants.PARAMS, new ExportParams("入库单主表数据", "导出人:" + sysUser.getRealname(), "入库单主表"));
-		mv.addObject(NormalExcelConstants.DATA_LIST, pageList);
-		return mv;
-	}
+      // Step.4 AutoPoi 导出Excel
+      ModelAndView mv = new ModelAndView(new JeecgEntityExcelView());
+      mv.addObject(NormalExcelConstants.FILE_NAME, "入库单主表列表");
+      mv.addObject(NormalExcelConstants.CLASS, WmsStockInOrdersPage.class);
+      mv.addObject(NormalExcelConstants.PARAMS, new ExportParams("入库单主表数据", "导出人:"+sysUser.getRealname(), "入库单主表"));
+      mv.addObject(NormalExcelConstants.DATA_LIST, pageList);
+      return mv;
+    }
 
-	/**
-	 * 通过excel导入数据
-	 *
-	 * @param request
-	 * @param response
-	 * @return
-	 */
-	@RequiresPermissions("inorder:wms_stock_in_orders:importExcel")
-	@RequestMapping(value = "/importExcel", method = RequestMethod.POST)
-	public Result<?> importExcel(HttpServletRequest request, HttpServletResponse response) {
-		MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
-		Map<String, MultipartFile> fileMap = multipartRequest.getFileMap();
-		for (Map.Entry<String, MultipartFile> entity : fileMap.entrySet()) {
-			// 获取上传文件对象
-			MultipartFile file = entity.getValue();
-			ImportParams params = new ImportParams();
-			params.setTitleRows(2);
-			params.setHeadRows(1);
-			params.setNeedSave(true);
-			try {
-				List<WmsStockInOrdersPage> list = ExcelImportUtil.importExcel(file.getInputStream(),
-						WmsStockInOrdersPage.class, params);
-				for (WmsStockInOrdersPage page : list) {
-					WmsStockInOrders po = new WmsStockInOrders();
-					BeanUtils.copyProperties(page, po);
-					wmsStockInOrdersService.saveMain(po, page.getWmsStockInOrderItemsList());
-				}
-				return Result.OK("文件导入成功！数据行数:" + list.size());
-			} catch (Exception e) {
-				log.error(e.getMessage(), e);
-				return Result.error("文件导入失败:" + e.getMessage());
-			} finally {
-				try {
-					file.getInputStream().close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-		return Result.OK("文件导入失败！");
-	}
+    /**
+    * 通过excel导入数据
+    *
+    * @param request
+    * @param response
+    * @return
+    */
+    @RequiresPermissions("inorder:wms_stock_in_orders:importExcel")
+    @RequestMapping(value = "/importExcel", method = RequestMethod.POST)
+    public Result<?> importExcel(HttpServletRequest request, HttpServletResponse response) {
+      MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+      Map<String, MultipartFile> fileMap = multipartRequest.getFileMap();
+      for (Map.Entry<String, MultipartFile> entity : fileMap.entrySet()) {
+          // 获取上传文件对象
+          MultipartFile file = entity.getValue();
+          ImportParams params = new ImportParams();
+          params.setTitleRows(2);
+          params.setHeadRows(1);
+          params.setNeedSave(true);
+          try {
+              List<WmsStockInOrdersPage> list = ExcelImportUtil.importExcel(file.getInputStream(), WmsStockInOrdersPage.class, params);
+              for (WmsStockInOrdersPage page : list) {
+                  WmsStockInOrders po = new WmsStockInOrders();
+                  BeanUtils.copyProperties(page, po);
+                  wmsStockInOrdersService.saveMain(po, page.getWmsStockInOrderItemsList());
+              }
+              return Result.OK("文件导入成功！数据行数:" + list.size());
+          } catch (Exception e) {
+              log.error(e.getMessage(),e);
+              return Result.error("文件导入失败:"+e.getMessage());
+          } finally {
+              try {
+                  file.getInputStream().close();
+              } catch (IOException e) {
+                  e.printStackTrace();
+              }
+          }
+      }
+      return Result.OK("文件导入失败！");
+    }
 
 }

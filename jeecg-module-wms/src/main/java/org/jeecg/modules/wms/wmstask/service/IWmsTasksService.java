@@ -8,28 +8,51 @@ import org.jeecg.modules.wms.wmstask.entity.WmsTasksRecords;
 /**
  * @Description: 任务表
  * @Author: jeecg-boot
- * @Date: 2026-07-23
+ * @Date:   2025-08-30
  * @Version: V1.0
  */
 public interface IWmsTasksService extends IService<WmsTasks> {
-    public void createReceiveTask(String orderId, String operator);
-
-    /*
-     * 创建收获任务
+    /**
+     * 创建收货任务
+     * @param inOrderId 入库单id
+     * @param operator 执行人
      */
-    public IPage<WmsTasks> list(WmsTasks wmsTasks, Integer pageNo, Integer pageSize);
+    public void createReceiveTask(String inOrderId,String operator);
 
     /**
-     * 执行收货
+     * 生成任务编号
+     * 规则: TSK+年月日+5位序号，序号使用redis自增序号实现
      */
-    public void receive(WmsTasksRecords wmsTasksRecords);
+    public String generateTaskCode();
+
+    /**
+     * 查询任务列表
+     * @param wmsTasks
+     * @param pageNo
+     * @param pageSize
+     * @return
+     */
+    IPage<WmsTasks> list(WmsTasks wmsTasks, Integer pageNo, Integer pageSize);
+
+    /**
+     * 收货
+     * @param wmsTasksRecords
+     */
+    void receive(WmsTasksRecords wmsTasksRecords);
+
     /**
      * 执行任务
      */
-    public WmsTasks execute(WmsTasksRecords wmsTasksRecords);
+    WmsTasks execute(WmsTasksRecords wmsTasksRecords);
 
     /**
-     * 执行上架
+     * 创建上架任务
+     * @param orderId
+     */
+    public void createPutawayTask(String orderId);
+
+    /**
+     * 上架方法
      */
     public void putaway(WmsTasksRecords wmsTasksRecords);
 }

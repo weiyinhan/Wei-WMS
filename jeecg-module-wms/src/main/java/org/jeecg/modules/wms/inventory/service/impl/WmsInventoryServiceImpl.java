@@ -53,14 +53,17 @@ public class WmsInventoryServiceImpl extends ServiceImpl<WmsInventoryMapper, Wms
 
     @Override
     public List<WmsInventory> selectAvailableBySku(String warehouseId, WmsOutOrdersItems skuItem) {
-        LambdaQueryWrapper<WmsInventory> wrapper = new LambdaQueryWrapper<WmsInventory>()
-                .eq(WmsInventory::getProductId, skuItem.getSkuId())
-                .eq(WmsInventory::getWarehouseId, warehouseId)
+        //查询该明细对应商品在仓库的可用库存列表,根据商品id、仓库id、批次号查询，查询可用库存数量大于0，查询结果按过期时间升序排，按入库单升序排
+        //sql ：select * from wms_inventory where product_id = #{skuItem.skuId} and warehouse_id = #{warehouseId} and batch_number = #{skuItem.batchNumber} and is_sellable = '1' and available_quantity > 0 order by expiry_date asc,stock_in_time asc
+        LambdaQueryWrapper<WmsInventory> wmsInventoryLambdaQueryWrapper = new LambdaQueryWrapper<WmsInventory>()
+                .eq(WmsInventory::getProductId, skuItem.getSkuId())//商品id
+                .eq(WmsInventory::getWarehouseId, warehouseId)//仓库id
                 .eq(StringUtils.isNotEmpty(skuItem.getBatchNumber()), WmsInventory::getBatchNumber, skuItem.getBatchNumber())
-                .eq(WmsInventory::getIsSellable, "1")
+                .eq(WmsInventory::getIsSellable, "1")//是否可售
                 .gt(WmsInventory::getAvailableQuantity, 0)
                 .orderByAsc(WmsInventory::getExpiryDate)
                 .orderByAsc(WmsInventory::getStockInTime);
-        return this.list(wrapper);
+        List<WmsInventory> list = this.list(wmsInventoryLambdaQueryWrapper);
+        return list;
     }
 }

@@ -27,5 +27,10 @@ public interface IWmsInventoryService extends IService<WmsInventory> {
     /**
      * 查询可用库存
      */
-    List<WmsInventory> selectAvailableBySku(String warehouseId, WmsOutOrdersItems skuItem);
+    /**
+     * 查询可用库存
+     * @param warehouseId 仓库id
+     * @param  skuItem sku信息
+     */
+    public List<WmsInventory> selectAvailableBySku(String warehouseId, WmsOutOrdersItems skuItem);
 }

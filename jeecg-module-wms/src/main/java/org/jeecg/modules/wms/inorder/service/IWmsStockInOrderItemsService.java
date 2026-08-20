@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * @Description: 入库单明细
  * @Author: jeecg-boot
- * @Date:   2026-07-20
+ * @Date:   2025-08-30
  * @Version: V1.0
  */
 public interface IWmsStockInOrderItemsService extends IService<WmsStockInOrderItems> {
@@ -19,9 +19,18 @@ public interface IWmsStockInOrderItemsService extends IService<WmsStockInOrderIt
 	 * @return List<WmsStockInOrderItems>
 	 */
 	public List<WmsStockInOrderItems> selectByMainId(String mainId);
+
 	/**
 	 * 更新收货完成状态
 	 * @param stockInOrderItemId 入库单明细id
 	 */
 	void updateReceivedStatus(String stockInOrderItemId);
+
+	/**
+	 * 更新上架完成状态
+	 * @param stockInOrderItemId 入库单明细id
+	 */
+	void updatePutawayStatus(String stockInOrderItemId);
+
+
 }

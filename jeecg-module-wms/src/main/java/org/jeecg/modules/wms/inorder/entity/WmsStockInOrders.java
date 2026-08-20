@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.TableLogic;
@@ -21,100 +20,88 @@ import io.swagger.v3.oas.annotations.media.Schema;
 /**
  * @Description: 入库单主表
  * @Author: jeecg-boot
- * @Date: 2026-07-20
+ * @Date:   2025-08-30
  * @Version: V1.0
  */
-@Schema(description = "入库单主表")
+@Schema(description="入库单主表")
 @Data
 @TableName("wms_stock_in_orders")
 public class WmsStockInOrders implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /** 主键 */
-    @TableId(type = IdType.ASSIGN_ID)
+	/**主键*/
+	@TableId(type = IdType.ASSIGN_ID)
     @Schema(description = "主键")
     private String id;
-    /** 创建人 */
+	/**创建人*/
     @Schema(description = "创建人")
     private String createBy;
-    /** 创建日期 */
-    @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
-    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	/**创建日期*/
+	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
+    @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
     @Schema(description = "创建日期")
     private Date createTime;
-    /** 更新人 */
+	/**更新人*/
     @Schema(description = "更新人")
     private String updateBy;
-    /** 更新日期 */
-    @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
-    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	/**更新日期*/
+	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
+    @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
     @Schema(description = "更新日期")
     private Date updateTime;
-    /** 所属部门 */
+	/**所属部门*/
     @Schema(description = "所属部门")
     private String sysOrgCode;
-    /** 入库单号 */
-    @Excel(name = "入库单号", width = 15)
+	/**入库单号*/
+	@Excel(name = "入库单号", width = 15)
     @Schema(description = "入库单号")
     private String orderNumber;
-    /** 入库类型 */
-    @Excel(name = "入库类型", width = 15, dicCode = "asn_type")
+	/**入库类型*/
+	@Excel(name = "入库类型", width = 15, dicCode = "asn_type")
     @Dict(dicCode = "asn_type")
     @Schema(description = "入库类型")
     private String orderType;
-    /** 来源单号 */
-    @Excel(name = "来源单号", width = 15)
+	/**来源单号*/
+	@Excel(name = "来源单号", width = 15)
     @Schema(description = "来源单号")
     private String sourceNumber;
-    /** 货主id */
-    @Excel(name = "货主id", width = 15)
+	/**货主id*/
+	@Excel(name = "货主id", width = 15)
     @Schema(description = "货主id")
     private String ownerId;
-    /** 预计到货时间 */
-    @Excel(name = "预计到货时间", width = 20, format = "yyyy-MM-dd HH:mm:ss")
-    @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
-    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	/**预计到货时间*/
+	@Excel(name = "预计到货时间", width = 20, format = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
+    @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
     @Schema(description = "预计到货时间")
     private Date expectedArrivalTime;
-    /** 状态 */
-    @Excel(name = "状态", width = 15, dicCode = "asn_status")
+	/**状态*/
+	@Excel(name = "状态", width = 15, dicCode = "asn_status")
     @Dict(dicCode = "asn_status")
     @Schema(description = "状态")
     private String status;
-    /** 备注 */
-    @Excel(name = "备注", width = 15)
+	/**备注*/
+	@Excel(name = "备注", width = 15)
     @Schema(description = "备注")
     private String remarks;
-    /** 预期总数量(冗余字段) */
-    @Excel(name = "预期总数量(冗余字段)", width = 15)
+	/**预期总数量(冗余字段)*/
+	@Excel(name = "预期总数量(冗余字段)", width = 15)
     @Schema(description = "预期总数量(冗余字段)")
     private Integer totalExpectedQuantity;
-    /** 实际收货总量 */
-    @Excel(name = "实际收货总量", width = 15)
+	/**实际收货总量*/
+	@Excel(name = "实际收货总量", width = 15)
     @Schema(description = "实际收货总量")
     private Integer totalReceivedQuantity;
-    /** 已上架总量 */
-    @Excel(name = "已上架总量", width = 15)
+	/**已上架总量*/
+	@Excel(name = "已上架总量", width = 15)
     @Schema(description = "已上架总量")
     private Integer totalShelvedQuantity;
-    /** 不良品总数量(冗余字段) */
-    @Excel(name = "不良品总数量(冗余字段)", width = 15)
+	/**不良品总数量(冗余字段)*/
+	@Excel(name = "不良品总数量(冗余字段)", width = 15)
     @Schema(description = "不良品总数量(冗余字段)")
     private Integer totalDefectiveQuantity;
-    /** 仓库 */
-    @Excel(name = "仓库", width = 15)
+	/**仓库*/
+	@Excel(name = "仓库", width = 15)
     @Schema(description = "仓库")
     private String warehouseId;
-
-    /** 货主名称 */
-    @Excel(name = "货主名称", width = 15)
-    @Schema(description = "货主名称")
-    @TableField(exist = false)
-    private String ownerName;
-
-    /** 仓库名称 */
-    @Excel(name = "仓库名称", width = 15)
-    @Schema(description = "仓库名称")
-    @TableField(exist = false)
-    private String warehouseName;
 }

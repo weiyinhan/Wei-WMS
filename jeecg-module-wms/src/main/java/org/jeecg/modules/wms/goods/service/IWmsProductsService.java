@@ -1,20 +1,31 @@
 package org.jeecg.modules.wms.goods.service;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.service.IService;
-import jakarta.servlet.http.HttpServletRequest;
 import org.jeecg.modules.wms.goods.entity.WmsProducts;
+import com.baomidou.mybatisplus.extension.service.IService;
 import org.jeecg.modules.wms.goods.excel.WmsProductsImport;
 
 import java.util.List;
 
+/**
+ * @Description: 商品信息表
+ * @Author: jeecg-boot
+ * @Date:   2025-04-14
+ * @Version: V1.0
+ */
 public interface IWmsProductsService extends IService<WmsProducts> {
-    void importProduct(List<WmsProductsImport> wmsProductsImport);
-    /**商品表导入数据
-     */
-    IPage<WmsProducts> queryPageList(WmsProducts wmsProducts,
-                                     Integer pageNo,
-                                     Integer pageSize,
-                                     HttpServletRequest req);
 
+    /**
+     * 添加商品
+     */
+    void add(WmsProducts wmsProducts);
+
+    /**
+     * 修改商品
+     */
+    void edit(WmsProducts wmsProducts);
+    /**
+     * 导入商品
+     * @param wmsProductsImportList
+     */
+    void importProduct(List<WmsProductsImport> wmsProductsImportList);
 }

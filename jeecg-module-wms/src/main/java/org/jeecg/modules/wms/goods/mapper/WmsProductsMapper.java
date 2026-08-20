@@ -1,7 +1,10 @@
 package org.jeecg.modules.wms.goods.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import java.util.List;
+
+import org.apache.ibatis.annotations.Param;
 import org.jeecg.modules.wms.goods.entity.WmsProducts;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 /**
  * @Description: 商品信息表

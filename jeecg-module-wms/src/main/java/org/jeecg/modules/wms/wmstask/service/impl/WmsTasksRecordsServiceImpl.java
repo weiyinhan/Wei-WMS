@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
+import org.apache.commons.lang3.ObjectUtils;
 import org.jeecg.modules.wms.wmstask.entity.WmsTasksRecords;
 import org.jeecg.modules.wms.wmstask.mapper.WmsTasksRecordsMapper;
 import org.jeecg.modules.wms.wmstask.service.IWmsTasksRecordsService;
@@ -16,7 +17,7 @@ import java.util.List;
 /**
  * @Description: 任务执行记录表
  * @Author: jeecg-boot
- * @Date:   2026-07-23
+ * @Date:   2025-08-30
  * @Version: V1.0
  */
 @Service
@@ -24,14 +25,17 @@ public class WmsTasksRecordsServiceImpl extends ServiceImpl<WmsTasksRecordsMappe
 
     @Override
     public IPage<WmsTasksRecords> pageList(WmsTasksRecords wmsTasksRecords, Integer pageNo, Integer pageSize) {
+        wmsTasksRecords = ObjectUtils.defaultIfNull(wmsTasksRecords, new WmsTasksRecords());
+        //参考上边的代码分页查询任务记录列表
         Page<WmsTasksRecords> page = PageHelper.startPage(pageNo, pageSize);
-        List<WmsTasksRecords> list = baseMapper.queryRecordsList(wmsTasksRecords);
-        PageDTO<WmsTasksRecords> pageDTO = new PageDTO<>();
-        pageDTO.setRecords(list);
-        pageDTO.setTotal(page.getTotal());
-        pageDTO.setSize(page.getPageSize());
-        pageDTO.setCurrent(page.getPageNum());
-        pageDTO.setPages(page.getPages());
-        return pageDTO;
+        List<WmsTasksRecords> list = baseMapper.queryList(wmsTasksRecords);
+        PageDTO<WmsTasksRecords> wmsTasksRecordsPageDTO = new PageDTO<>();
+        wmsTasksRecordsPageDTO.setRecords(list);
+        wmsTasksRecordsPageDTO.setTotal(page.getTotal());
+        wmsTasksRecordsPageDTO.setSize(page.getPageSize());
+        wmsTasksRecordsPageDTO.setCurrent(page.getPageNum());
+        wmsTasksRecordsPageDTO.setPages(page.getPages());
+
+        return wmsTasksRecordsPageDTO;
     }
 }

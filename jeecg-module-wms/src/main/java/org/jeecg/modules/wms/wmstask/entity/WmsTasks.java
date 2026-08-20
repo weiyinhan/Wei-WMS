@@ -20,7 +20,7 @@ import lombok.experimental.Accessors;
 /**
  * @Description: 任务表
  * @Author: jeecg-boot
- * @Date:   2026-07-23
+ * @Date:   2025-08-30
  * @Version: V1.0
  */
 @Data
@@ -59,14 +59,14 @@ public class WmsTasks implements Serializable {
     @Schema(description = "任务号")
     private String taskNumber;
 	/**任务类型*/
-    @Dict(dicCode = "task_type")
 	@Excel(name = "任务类型", width = 15)
     @Schema(description = "任务类型")
+    @Dict(dicCode = "task_type")
     private String taskType;
 	/**任务状态*/
-    @Dict(dicCode = "task_status")
 	@Excel(name = "任务状态", width = 15)
     @Schema(description = "任务状态")
+    @Dict(dicCode = "task_status")
     private String taskStatus;
 	/**商品id*/
 	@Excel(name = "商品id", width = 15)

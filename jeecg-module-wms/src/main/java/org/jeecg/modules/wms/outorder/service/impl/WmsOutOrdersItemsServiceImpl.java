@@ -85,6 +85,7 @@ public class WmsOutOrdersItemsServiceImpl extends ServiceImpl<WmsOutOrdersItemsM
 		if(CollectionUtils.isEmpty(orderIds)){
 			return Collections.emptyList();
 		}
+		//sql select * from wms_out_orders_items where order_id in (orderIds)
 		LambdaQueryWrapper<WmsOutOrdersItems> wmsOutOrdersItemsLambdaQueryWrapper = new LambdaQueryWrapper<>();
 		wmsOutOrdersItemsLambdaQueryWrapper.in(WmsOutOrdersItems::getOrderId, orderIds);
 		return this.list(wmsOutOrdersItemsLambdaQueryWrapper);

@@ -72,6 +72,7 @@ public interface IWmsOutOrdersService extends IService<WmsOutOrders> {
 	 * @return 分配状态 ："ALLOCATED"-分配成功 分配失败 "ALLOCATED_FAILED"-分配失败
 	 */
 	String allocateStock(String orderId);
+
 	/**
 	 * 为商品分配库存
 	 * @param item 需分配的出库明细
@@ -79,7 +80,8 @@ public interface IWmsOutOrdersService extends IService<WmsOutOrders> {
 	 * @return  分配状态
 	 */
 	public String allocateStockToItems(WmsOutOrdersItems item,
-	                                   List<WmsInventory> availableStocks);
+									   List<WmsInventory> availableStocks);
+
 	/**
 	 * 通过主表id查询子表数据
 	 *
