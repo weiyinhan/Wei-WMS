@@ -120,7 +120,6 @@ public class WmsWaveMasterController extends JeecgController<WmsWaveMaster, IWms
 		 //创建波次
 		 wmsWaveMasterService.createWave(warehouseId,Arrays.asList(strategyCodesArr));
 		 return Result.OK("创建成功！");
-
     }
 
 
