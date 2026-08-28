@@ -6,10 +6,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang3.StringUtils;
 import org.jeecg.common.exception.JeecgBootException;
 import org.jeecgframework.poi.excel.ExcelImportUtil;
 import org.jeecgframework.poi.excel.def.NormalExcelConstants;
@@ -41,252 +41,29 @@ import org.jeecg.common.aspect.annotation.AutoLog;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 
- /**
- * @Description: 包裹主表
- * @Author: jeecg-boot
- * @Date:   2025-06-18
- * @Version: V1.0
- */
-@Tag(name="包裹主表")
+@Tag(name = "包裹主表")
 @RestController
 @RequestMapping("/shipment/wmsShipment")
 @Slf4j
 public class WmsShipmentController {
-	@Autowired
-	private IWmsShipmentService wmsShipmentService;
-	@Autowired
-	private IWmsShipmentDetailService wmsShipmentDetailService;
-
-	/**
-	 * 分页列表查询
-	 *
-	 * @param wmsShipment
-	 * @param pageNo
-	 * @param pageSize
-	 * @param req
-	 * @return
-	 */
-	//@AutoLog(value = "包裹主表-分页列表查询")
-	@Operation(summary="包裹主表-分页列表查询")
-	@GetMapping(value = "/list")
-	public Result<IPage<WmsShipment>> queryPageList(WmsShipment wmsShipment,
-								   @RequestParam(name="pageNo", defaultValue="1") Integer pageNo,
-								   @RequestParam(name="pageSize", defaultValue="10") Integer pageSize,
-								   HttpServletRequest req) {
-
-		IPage<WmsShipment> WmsShipmentIPage = wmsShipmentService.queryList(wmsShipment, pageNo, pageSize);
-		return Result.OK(WmsShipmentIPage);
-
-	}
-	 /**
-	  * 根据波次创建包裹
-	  */
-	 @AutoLog(value = "波次-创建包裹")
-	 @Operation(summary="波次-创建包裹")
-	 @PostMapping(value = "/createShipment")
-	 public Result<String> createShipment(@RequestParam(name="id",required=true) String id) {
-		 int shipment = wmsShipmentService.createShipment(id);
-		 return Result.OK("创建包裹成功"+shipment+"个");
-	 }
-
-
-	/**
-	 *   添加
-	 *
-	 * @param wmsShipmentPage
-	 * @return
-	 */
-	@AutoLog(value = "包裹主表-添加")
-	@Operation(summary="包裹主表-添加")
-    @RequiresPermissions("shipment:wms_shipment:add")
-	@PostMapping(value = "/add")
-	public Result<String> add(@RequestBody WmsShipmentPage wmsShipmentPage) {
-		WmsShipment wmsShipment = new WmsShipment();
-		BeanUtils.copyProperties(wmsShipmentPage, wmsShipment);
-		wmsShipmentService.saveMain(wmsShipment, wmsShipmentPage.getWmsShipmentDetailList());
-		return Result.OK("添加成功！");
-	}
-
-	/**
-	 *  编辑
-	 *
-	 * @param wmsShipmentPage
-	 * @return
-	 */
-	@AutoLog(value = "包裹主表-编辑")
-	@Operation(summary="包裹主表-编辑")
-    @RequiresPermissions("shipment:wms_shipment:edit")
-	@RequestMapping(value = "/edit", method = {RequestMethod.PUT,RequestMethod.POST})
-	public Result<String> edit(@RequestBody WmsShipmentPage wmsShipmentPage) {
-		WmsShipment wmsShipment = new WmsShipment();
-		BeanUtils.copyProperties(wmsShipmentPage, wmsShipment);
-		WmsShipment wmsShipmentEntity = wmsShipmentService.getById(wmsShipment.getId());
-		if(wmsShipmentEntity==null) {
-			return Result.error("未找到对应数据");
-		}
-		wmsShipmentService.updateMain(wmsShipment, wmsShipmentPage.getWmsShipmentDetailList());
-		return Result.OK("编辑成功!");
-	}
-
-	/**
-	 *   通过id删除
-	 *
-	 * @param id
-	 * @return
-	 */
-	@AutoLog(value = "包裹主表-通过id删除")
-	@Operation(summary="包裹主表-通过id删除")
-    @RequiresPermissions("shipment:wms_shipment:delete")
-	@DeleteMapping(value = "/delete")
-	public Result<String> delete(@RequestParam(name="id",required=true) String id) {
-		wmsShipmentService.delMain(id);
-		return Result.OK("删除成功!");
-	}
-
-	/**
-	 *  批量删除
-	 *
-	 * @param ids
-	 * @return
-	 */
-	@AutoLog(value = "包裹主表-批量删除")
-	@Operation(summary="包裹主表-批量删除")
-    @RequiresPermissions("shipment:wms_shipment:deleteBatch")
-	@DeleteMapping(value = "/deleteBatch")
-	public Result<String> deleteBatch(@RequestParam(name="ids",required=true) String ids) {
-		this.wmsShipmentService.delBatchMain(Arrays.asList(ids.split(",")));
-		return Result.OK("批量删除成功！");
-	}
-
-	/**
-	 * 通过id查询
-	 *
-	 * @param id
-	 * @return
-	 */
-	//@AutoLog(value = "包裹主表-通过id查询")
-	@Operation(summary="包裹主表-通过id查询")
-	@GetMapping(value = "/queryById")
-	public Result<WmsShipment> queryById(@RequestParam(name="id",required=true) String id) {
-		WmsShipment wmsShipment = wmsShipmentService.getById(id);
-		if(wmsShipment==null) {
-			return Result.error("未找到对应数据");
-		}
-		return Result.OK(wmsShipment);
-
-	}
-
-	/**
-	 * 通过id查询
-	 *
-	 * @param id
-	 * @return
-	 */
-	//@AutoLog(value = "包裹明细表通过主表ID查询")
-	@Operation(summary="包裹明细表-通主表ID查询")
-	@GetMapping(value = "/queryWmsShipmentDetailByMainId")
-	public Result<List<WmsShipmentDetail>> queryWmsShipmentDetailListByMainId(@RequestParam(name="id",required=true) String id) {
-		List<WmsShipmentDetail> wmsShipmentDetailList = wmsShipmentDetailService.selectByMainId(id);
-		return Result.OK(wmsShipmentDetailList);
-	}
-
-	 /**
-	  * 完成某波次的打包
-	  */
-	 @AutoLog(value = "包裹主表-完成某波次的打包")
-	 @Operation(summary="包裹主表-完成某波次的打包")
-	 @PostMapping(value = "/completePackByWave")
-	 public Result<String> completePackByWave(@RequestParam(name="ids",required=true) String ids) {
-		 if(StringUtils.isEmpty(ids)){
-			 throw new JeecgBootException("请选择波次");
-		 }
-		 String[] waveIdsArray = ids.split(",");
-		 for (String waveId : waveIdsArray) {
-			 wmsShipmentService.completePackByWave(waveId);
-		 }
-		 return Result.OK("完成打包成功");
-	 }
 
     /**
-    * 导出excel
-    *
-    * @param request
-    * @param wmsShipment
-    */
-    @RequiresPermissions("shipment:wms_shipment:exportXls")
-    @RequestMapping(value = "/exportXls")
-    public ModelAndView exportXls(HttpServletRequest request, WmsShipment wmsShipment) {
-      // Step.1 组装查询条件查询数据
-      QueryWrapper<WmsShipment> queryWrapper = QueryGenerator.initQueryWrapper(wmsShipment, request.getParameterMap());
-      LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
+     * 完成某波次的打包
+     */
+    @Autowired
+    IWmsShipmentService wmsShipmentService;
 
-      //配置选中数据查询条件
-      String selections = request.getParameter("selections");
-      if(oConvertUtils.isNotEmpty(selections)) {
-         List<String> selectionList = Arrays.asList(selections.split(","));
-         queryWrapper.in("id",selectionList);
-      }
-      //Step.2 获取导出数据
-      List<WmsShipment> wmsShipmentList = wmsShipmentService.list(queryWrapper);
-
-      // Step.3 组装pageList
-      List<WmsShipmentPage> pageList = new ArrayList<WmsShipmentPage>();
-      for (WmsShipment main : wmsShipmentList) {
-          WmsShipmentPage vo = new WmsShipmentPage();
-          BeanUtils.copyProperties(main, vo);
-          List<WmsShipmentDetail> wmsShipmentDetailList = wmsShipmentDetailService.selectByMainId(main.getId());
-          vo.setWmsShipmentDetailList(wmsShipmentDetailList);
-          pageList.add(vo);
-      }
-
-      // Step.4 AutoPoi 导出Excel
-      ModelAndView mv = new ModelAndView(new JeecgEntityExcelView());
-      mv.addObject(NormalExcelConstants.FILE_NAME, "包裹主表列表");
-      mv.addObject(NormalExcelConstants.CLASS, WmsShipmentPage.class);
-      mv.addObject(NormalExcelConstants.PARAMS, new ExportParams("包裹主表数据", "导出人:"+sysUser.getRealname(), "包裹主表"));
-      mv.addObject(NormalExcelConstants.DATA_LIST, pageList);
-      return mv;
+    @AutoLog(value = "包裹主表-完成某波次的打包")
+    @Operation(summary = "包裹主表-完成某波次的打包")
+    @PostMapping(value = "/completePackByWave")
+    public Result<String> completePackByWave(@RequestParam(name = "ids", required = true) String ids) {
+        if (StringUtils.isEmpty(ids)) {
+            throw new JeecgBootException("请选择波次");
+        }
+        String[] waveIdsArray = ids.split(",");
+        for (String waveId : waveIdsArray) {
+            wmsShipmentService.completePackByWave(waveId);
+        }
+        return Result.OK("完成打包成功");
     }
-
-    /**
-    * 通过excel导入数据
-    *
-    * @param request
-    * @param response
-    * @return
-    */
-    @RequiresPermissions("shipment:wms_shipment:importExcel")
-    @RequestMapping(value = "/importExcel", method = RequestMethod.POST)
-    public Result<?> importExcel(HttpServletRequest request, HttpServletResponse response) {
-      MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
-      Map<String, MultipartFile> fileMap = multipartRequest.getFileMap();
-      for (Map.Entry<String, MultipartFile> entity : fileMap.entrySet()) {
-          // 获取上传文件对象
-          MultipartFile file = entity.getValue();
-          ImportParams params = new ImportParams();
-          params.setTitleRows(2);
-          params.setHeadRows(1);
-          params.setNeedSave(true);
-          try {
-              List<WmsShipmentPage> list = ExcelImportUtil.importExcel(file.getInputStream(), WmsShipmentPage.class, params);
-              for (WmsShipmentPage page : list) {
-                  WmsShipment po = new WmsShipment();
-                  BeanUtils.copyProperties(page, po);
-                  wmsShipmentService.saveMain(po, page.getWmsShipmentDetailList());
-              }
-              return Result.OK("文件导入成功！数据行数:" + list.size());
-          } catch (Exception e) {
-              log.error(e.getMessage(),e);
-              return Result.error("文件导入失败:"+e.getMessage());
-          } finally {
-              try {
-                  file.getInputStream().close();
-              } catch (IOException e) {
-                  e.printStackTrace();
-              }
-          }
-      }
-      return Result.OK("文件导入失败！");
-    }
-
 }

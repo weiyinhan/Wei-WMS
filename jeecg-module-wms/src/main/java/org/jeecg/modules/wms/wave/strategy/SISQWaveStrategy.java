@@ -39,8 +39,9 @@ public class SISQWaveStrategy extends IWaveStrategy {
 
         //筛选满足单品单件的订单
         List<WmsOutOrders> collect = orders.stream().filter(order -> order.getTotalSku() == 1 && order.getTotalQuantity() == 1).collect(Collectors.toList());
-        //如果满足单品单件的订单为空，则返回
+        //如果满足单品单件的订单为空，则传递给下一个策略
         if (collect.isEmpty()) {
+            processNext(orders, allocationsMap);
             return;
         }
         //从波次策略表查询最小订单数

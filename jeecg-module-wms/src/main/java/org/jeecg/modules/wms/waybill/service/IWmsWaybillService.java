@@ -38,5 +38,6 @@ public interface IWmsWaybillService  {
 	 */
 	public void generateWaybillForOrder(String orderId) throws Exception;
 
+	
 
 }

@@ -12,8 +12,12 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.jeecg.common.constant.ProvinceCityArea;
 import org.jeecg.modules.wms.goods.entity.WmsCargoOwners;
+import org.jeecg.modules.wms.goods.entity.WmsProducts;
 import org.jeecg.modules.wms.goods.service.IWmsCargoOwnersService;
+import org.jeecg.modules.wms.goods.service.IWmsProductsService;
 import org.jeecg.modules.wms.outorder.entity.WmsOutOrders;
+import org.jeecg.modules.wms.outorder.entity.WmsOutOrdersItems;
+import org.jeecg.modules.wms.outorder.service.IWmsOutOrdersItemsService;
 import org.jeecg.modules.wms.shipment.entity.WmsShipment;
 import org.jeecg.modules.wms.waybill.service.IWmsSfService;
 import org.jeecg.modules.wms.waybill.sf.SfApiResponse;
@@ -40,10 +44,13 @@ import java.util.stream.Collectors;
 public class IWmsSfServiceImpl implements IWmsSfService {
 
     @Autowired
-    private ProvinceCityArea provinceCityArea;
+    private IWmsOutOrdersItemsService wmsOutOrdersItemsService;
 
     @Autowired
+    private IWmsProductsService wmsProductsService;
+    @Autowired
     private IWmsCargoOwnersService wmsCargoOwnersService;
+
 
     /**
      * 请求快递平台获取运单号
@@ -56,58 +63,60 @@ public class IWmsSfServiceImpl implements IWmsSfService {
         SfOrderInfo sfOrderInfo = new SfOrderInfo();
         /**
          * {
-         * 	"cargoDetails": [{
-         * 		"amount": 308.0,
-         * 		"count": 1.0,
-         * 		"name": "君宝牌地毯",
-         * 		"unit": "个",
-         * 		"volume": 0.0,
-         * 		"weight": 0.1
+         *     "cargoDetails": [{
+         *        "amount": 308.0,
+         *        "count": 1.0,
+         *        "name": "君宝牌地毯",
+         *        "unit": "个",
+         *        "volume": 0.0,
+         *        "weight": 0.1
          *        }],
-         * 	"contactInfoList": [{
-         * 		"address": "十堰市丹江口市公园路155号",
-         * 		"city": "十堰市",
-         * 		"company": "清雅轩保健品专营店",
-         * 		"contact": "张三丰",
-         * 		"contactType": 1,
-         * 		"county": "武当山风景区",
-         * 		"mobile": "17006805888",
-         * 		"province": "湖北省"
+         *     "contactInfoList": [{
+         *        "address": "十堰市丹江口市公园路155号",
+         *        "city": "十堰市",
+         *        "company": "清雅轩保健品专营店",
+         *        "contact": "张三丰",
+         *        "contactType": 1,
+         *        "county": "武当山风景区",
+         *        "mobile": "17006805888",
+         *        "province": "湖北省"
          *    }, {
-         * 		"address": "湖北省襄阳市襄城区环城东路122号",
-         * 		"city": "襄阳市",
-         * 		"contact": "郭襄阳",
-         * 		"county": "襄城区",
-         * 		"contactType": 2,
-         * 		"mobile": "18963828829",
-         * 		"province": "湖北省"
+         *        "address": "湖北省襄阳市襄城区环城东路122号",
+         *        "city": "襄阳市",
+         *        "contact": "郭襄阳",
+         *        "county": "襄城区",
+         *        "contactType": 2,
+         *        "mobile": "18963828829",
+         *        "province": "湖北省"
          *    }],
-         * 	"customsInfo": {},
-         * 	"expressTypeId": 2,
-         * 	"extraInfoList": [],
-         * 	"isOneselfPickup": 0,
-         * 	"language": "zh-CN",
-         * 	"orderId": "QIAO-20200618-00522",
-         * 	"parcelQty": 3,
-         * 	"payMethod": 1,
-         * 	"totalWeight": 6,
-         * 	"monthlyCard":7551234567
+         *     "customsInfo": {},
+         *     "expressTypeId": 2,
+         *     "extraInfoList": [],
+         *     "isOneselfPickup": 0,
+         *     "language": "zh-CN",
+         *     "orderId": "QIAO-20200618-00522",
+         *     "parcelQty": 3,
+         *     "payMethod": 1,
+         *     "totalWeight": 6,
+         *     "monthlyCard":7551234567
          *    }
          */
+        //包裹总重量
+
         sfOrderInfo.setOrderId(order.getOrderNo());
         sfOrderInfo.setOrderId(order.getOrderNo());
-        sfOrderInfo.setPayMethod(1);
+        sfOrderInfo.setPayMethod(1);//寄付
         sfOrderInfo.setParcelQty(shipments.size());//包裹数量
-        sfOrderInfo.setTotalWeight(6);//测试数据
+        sfOrderInfo.setTotalWeight(shipments.stream().mapToDouble(WmsShipment::getTotalWeight).sum());//包裹总重
         sfOrderInfo.setMonthlyCard(SfExpressUtil.getMonthly_card());
-        sfOrderInfo.setExpressTypeId(2);
+        sfOrderInfo.setExpressTypeId(2);//顺丰标快
         sfOrderInfo.setLanguage("zh-CN");
-        sfOrderInfo.setIsOneselfPickup(0);
+        sfOrderInfo.setIsOneselfPickup(0);//客户不同意快件自取
         //联系人信息
         List<SfOrderInfo.ContactInfo> contactInfoList = new ArrayList<>();
         //收件人信息
         SfOrderInfo.ContactInfo contactInfo = new SfOrderInfo.ContactInfo();
-        contactInfo.setContactType(2);
+        contactInfo.setContactType(2);//1，寄件方信息 2，到件方信息
         contactInfo.setContact(order.getConsignee());
         contactInfo.setMobile(order.getContact());
         contactInfo.setProvince(order.getShippingProvince());
@@ -121,7 +130,7 @@ public class IWmsSfServiceImpl implements IWmsSfService {
         //查询货主信息
         WmsCargoOwners cargoOwner = wmsCargoOwnersService.getById(ownerId);
         SfOrderInfo.ContactInfo senderInfo = new SfOrderInfo.ContactInfo();
-        senderInfo.setContactType(1);
+        senderInfo.setContactType(1);//1，寄件方信息 2，到件方信息
         senderInfo.setContact(cargoOwner.getOwnerName());
         senderInfo.setMobile(cargoOwner.getPhone());
         senderInfo.setProvince(cargoOwner.getCity());
@@ -133,22 +142,37 @@ public class IWmsSfServiceImpl implements IWmsSfService {
         sfOrderInfo.setContactInfoList(contactInfoList);
         //商品信息
         List<SfOrderInfo.CargoDetail> cargoDetails = new ArrayList<>();
+        //查询出库单明细
+        List<WmsOutOrdersItems> wmsOutOrdersItems = wmsOutOrdersItemsService.selectByMainId(order.getId());
+        // 遍历
+        for (WmsOutOrdersItems item : wmsOutOrdersItems) {
+            //查询商品
+            WmsProducts product = wmsProductsService.getById(item.getSkuId());
+            SfOrderInfo.CargoDetail cargoDetail = new SfOrderInfo.CargoDetail();
+            cargoDetail.setName(product.getProductName());
+            cargoDetail.setWeight(product.getNetWeight());//单位重量
+            cargoDetail.setCount(item.getPackedQuantity());
+            cargoDetail.setVolume(0.0);//体积
+            cargoDetail.setAmount(308.0);//价格
+            cargoDetails.add(cargoDetail);
+            sfOrderInfo.setCargoDetails(cargoDetails);
+        }
         //测试数据
-        SfOrderInfo.CargoDetail cargoDetail = new SfOrderInfo.CargoDetail();
-        cargoDetail.setName("君宝牌地毯");
-        cargoDetail.setWeight(0.1);
-        cargoDetail.setCount(1.0);
-        cargoDetail.setVolume(0.0);
-        cargoDetail.setAmount(308.0);
-        cargoDetails.add(cargoDetail);
-        sfOrderInfo.setCargoDetails(cargoDetails);
+//        SfOrderInfo.CargoDetail cargoDetail = new SfOrderInfo.CargoDetail();
+//        cargoDetail.setName("君宝牌地毯");
+//        cargoDetail.setWeight(0.1);
+//        cargoDetail.setCount(1.0);
+//        cargoDetail.setVolume(0.0);
+//        cargoDetail.setAmount(308.0);
+//        cargoDetails.add(cargoDetail);
+//        sfOrderInfo.setCargoDetails(cargoDetails);
         //生成json
         String sfOrderInfoJson = JSON.toJSONString(sfOrderInfo);
         String responseBody = SfExpressUtil.post(SfExpressUtil.EXP_RECE_CREATE_ORDER, sfOrderInfoJson);
         /**
          * {"apiErrorMsg":"","apiResponseID":"0001980D3635003FCDC966C657C6883F","apiResultCode":"A1000","apiResultData":"{\"success\":false,\"errorCode\":\"8016\",\"errorMsg\":\"重复下单\",\"msgData\":null}"}
          */
-//		HashMap hashMap = JSON.parseObject("{\"success\":false,\"errorCode\":\"8016\",\"errorMsg\":\"重复下单\",\"msgData\":null}", HashMap.class);
+//    HashMap hashMap = JSON.parseObject("{\"success\":false,\"errorCode\":\"8016\",\"errorMsg\":\"重复下单\",\"msgData\":null}", HashMap.class);
         //将响应结果转换成SfApiResponse
         SfApiResponse sfApiResponse = JSON.parseObject(responseBody, SfApiResponse.class);
         String apiResultDataJson = sfApiResponse.getApiResultData();
@@ -157,9 +181,9 @@ public class IWmsSfServiceImpl implements IWmsSfService {
         if ("重复下单".equals(apiResultData11.getErrorMsg())) {
             /**
              * {
-             * 	"searchType": "1",
-             * 	"orderId": "QIAO-20200618-00522",
-             * 	"language": "zh-cn"
+             *     "searchType": "1",
+             *     "orderId": "QIAO-20200618-00522",
+             *     "language": "zh-cn"
              * }
              */
             //查询订单请求对象
@@ -187,118 +211,4 @@ public class IWmsSfServiceImpl implements IWmsSfService {
         return null;
     }
 
-    @Override
-    public void requestSfGenerateWaybillPdf(WmsOutOrders order, List<WmsShipment> shipments, List<String> waybillNoList) throws Exception {
-        //调用运单pdf接口
-        /**
-         * {
-         * 	"templateCode": "fm_150_standard_Y2VL6F82",
-         * 	"version":"2.0",
-         *     	"fileType":"pdf",
-         *         "sync":true,
-         *
-         *  	"documents": [{
-         * 	"masterWaybillNo":"SF7444497619913",
-         * 	"seq":"1",
-         * 	"sum":"3",
-         * 	"remark":"有需要可以传自己需要备注的简短内容，没有可以不传该字段"},
-         *        {
-         * 	"masterWaybillNo":"SF7444497619913",
-         * 	"branchWaybillNo":"SF7444516115096",
-         * 	"seq":"2",
-         * 	"sum":"3",
-         * 	"remark":"有需要可以传自己需要备注的简短内容，没有可以不传该字段"},
-         *    {
-         * 	"masterWaybillNo":"SF7444497619913",
-         * 	"branchWaybillNo":"SF7444516115102",
-         * 	"seq":"3",
-         * 	"sum":"3",
-         * 	"remark":"有需要可以传自己需要备注的简短内容，没有可以不传该字段"}
-         *
-         * ]
-         * }
-         */
-        //准备请求参数
-        SfExpressUtil.SfWayBillPdfRequest sfPrintWaybillRequest = new SfExpressUtil.SfWayBillPdfRequest();
-        sfPrintWaybillRequest.setTemplateCode("fm_150_standard_Y2VL6F82");
-        sfPrintWaybillRequest.setVersion("2.0");
-        sfPrintWaybillRequest.setFileType("pdf");
-        sfPrintWaybillRequest.setSync(true);
-        List<SfExpressUtil.SfWayBillPdfRequest.Document> documents = new ArrayList<>();
-        int i=0;
-        for (String waybillNo : waybillNoList) {
-            SfExpressUtil.SfWayBillPdfRequest.Document document = new SfExpressUtil.SfWayBillPdfRequest.Document();
-            document.setMasterWaybillNo(waybillNo);
-            document.setSeq(String.valueOf(++i));
-            document.setSum(String.valueOf(waybillNoList.size()));
-            document.setRemark("");
-            documents.add(document);
-        }
-        sfPrintWaybillRequest.setDocuments(documents);
-        String waybillNo = JSON.toJSONString(sfPrintWaybillRequest);
-        //调用面单pdf接口
-        String waybillResponseBody = SfExpressUtil.post(SfExpressUtil.COM_RECE_CLOUD_PRINT_WAYBILLS, waybillNo);
-        SfApiResponse sfApiResponse2 = JSON.parseObject(waybillResponseBody, SfApiResponse.class);
-        String apiResultDataJson3 = sfApiResponse2.getApiResultData();
-        SfApiResponse.ApiResultData2 apiResultDataTemp = JSON.parseObject(apiResultDataJson3, SfApiResponse.ApiResultData2.class);
-        List<SfApiResponse.FileInfo> files = apiResultDataTemp.getObj().getFiles();
-        for (SfApiResponse.FileInfo file : files) {
-            String token = file.getToken();
-            String fileUrl = file.getUrl();
-            System.out.println(token);
-            System.out.println(fileUrl);
-            downloadFile(fileUrl, token, "D:\\develop\\upload\\1.pdf");
-
-
-        }
-    }
-    public  void downloadFile(String fileUrl, String token, String savePath) throws Exception {
-        CloseableHttpClient httpClient = HttpClients.createDefault();
-        try {
-            // 创建 HTTP GET 请求
-            HttpGet httpGet = new HttpGet(fileUrl);
-
-            // 设置请求头 X-Auth-Token
-            httpGet.setHeader("X-Auth-Token", token);
-
-            // 执行请求
-            CloseableHttpResponse response = httpClient.execute(httpGet);
-
-            try {
-                // 检查 HTTP 状态码
-                int statusCode = response.getStatusLine().getStatusCode();
-                if (statusCode != 200) {
-                    throw new RuntimeException("Failed to download file. HTTP status code: " + statusCode);
-                }
-
-                // 获取响应内容
-                HttpEntity entity = response.getEntity();
-                if (entity != null) {
-                    // 获取输入流
-                    try (InputStream inputStream = entity.getContent()) {
-                        // 创建输出文件
-                        File outputFile = new File(savePath);
-                        try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
-                            IOUtils.copy(inputStream, outputStream);
-//							// 缓冲区
-//							byte[] buffer = new byte[4096];
-//							int bytesRead;
-//
-//							// 读取并写入文件
-//							while ((bytesRead = inputStream.read(buffer)) != -1) {
-//								outputStream.write(buffer, 0, bytesRead);
-//							}
-                        }
-                    }
-                }
-
-                // 确保资源释放
-                EntityUtils.consume(entity);
-            } finally {
-                response.close();
-            }
-        } finally {
-            httpClient.close();
-        }
-    }
 }

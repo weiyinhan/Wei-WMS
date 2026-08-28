@@ -3,8 +3,7 @@ package org.jeecg.modules.wms.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.*;
 
 /**
  * 波次处理任务线程池
@@ -13,17 +12,29 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Configuration
 public class ThreadPoolConfiguration {
 
-    @Bean("waveThreadPool")
-    public ScheduledThreadPoolExecutor waveThreadPool() {
-        ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(10);
-        //配置最大线程数
-        executor.setMaximumPoolSize(10);
-
-        //配置线程池中的线程的名称前缀
-//        executor.set("counter-total-synchronize-");
-        // 设置拒绝策略：放弃任务
-        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardPolicy());
-
-        return executor;
-    }
+    @Bean("waybillThreadPool")
+    public ThreadPoolExecutor waybillThreadPool() {
+        int corePoolSize = 10;          // 核心线程数
+        int maximumPoolSize = 30;      // 最大线程数
+        long keepAliveTime = 30L;      // 空闲线程存活时间
+        TimeUnit unit = TimeUnit.SECONDS; // 时间单位
+        int queueCapacity = 2000;       // 队列容量
+    
+        // 创建任务队列
+        BlockingQueue<Runnable> workQueue = new LinkedBlockingQueue<>(queueCapacity);
+    
+        // 创建拒绝策略
+        RejectedExecutionHandler handler = new ThreadPoolExecutor.DiscardPolicy();
+    
+        // 创建线程池
+        return new ThreadPoolExecutor(
+                corePoolSize,
+                maximumPoolSize,
+                keepAliveTime,
+                unit,
+                workQueue,
+                Executors.defaultThreadFactory(),
+                handler
+        );
+   }
 }
