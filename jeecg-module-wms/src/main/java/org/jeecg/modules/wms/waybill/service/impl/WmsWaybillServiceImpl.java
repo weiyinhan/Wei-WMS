@@ -14,6 +14,7 @@ import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.jeecg.common.aspect.annotation.Lock;
 import org.jeecg.common.exception.JeecgBootException;
 import org.jeecg.common.util.DateUtils;
 import org.jeecg.common.util.RedisUtil;
@@ -41,6 +42,8 @@ import org.jeecg.modules.wms.waybill.service.IWmsSfService;
 import org.jeecg.modules.wms.waybill.service.IWmsWaybillService;
 import org.jeecg.modules.wms.wmstask.entity.WmsTasksRecords;
 import org.jeecg.modules.wms.wmstask.service.IWmsTasksRecordsService;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,6 +74,9 @@ public class WmsWaybillServiceImpl  implements IWmsWaybillService {
 	private IWmsSfService sfService;
 	@Autowired
 	private IWmsProductsService wmsProductsService;
+    @Autowired
+    private RedissonClient redissonClient;
+
 	@Override
 	public void send(String waveId) {
 
@@ -85,28 +91,42 @@ public class WmsWaybillServiceImpl  implements IWmsWaybillService {
 	 * 请求顺丰生成指定订单的运单
 	 * 首先请求顺丰下单，成功后生成运单
 	 */
+	@Lock(formatter = "ORDERS:CREATEWAYBILL:LOCK:#{orderId}", startDog = true)
 	public void generateWaybillForOrder(String orderId) throws Exception {
-		//查询出库单
-		WmsOutOrders order = wmsOutOrdersService.getById(orderId);
-		//如果状态不是打包完成，则不能生成运单
-		if(!order.getStatus().equals(WarehouseDictEnum.OUTBOUND_PACKED.getCode())){
-			throw new JeecgBootException("出库单"+order.getOrderNo()+"状态不是打包完成，不能生成运单");
-		}
-		//如果运单已经生成，则不能重复生成
-		if(order.getCreatedWaybill().equals("1")){
-			throw new JeecgBootException("出库单"+order.getOrderNo()+"已生成运单，不能重复生成");
-		}
-		//查询该订单下的包裹
-		List<WmsShipment> shipments = wmsShipmentService.selectByOrderId(orderId);
+//		//定义分布式锁名称
+//		String lockName = "ORDERS:CREATEWAYBILL:LOCK" + orderId;
+//		RLock lock = redissonClient.getLock(lockName);
+//		//获取锁
+//		boolean b = lock.tryLock(3, -1, TimeUnit.SECONDS);
+//		if (b) {//获取锁成功
+//			try {
+				//查询出库单
+				WmsOutOrders order = wmsOutOrdersService.getById(orderId);
+				//如果状态不是打包完成，则不能生成运单
+				if (!order.getStatus().equals(WarehouseDictEnum.OUTBOUND_PACKED.getCode())) {
+					throw new JeecgBootException("出库单" + order.getOrderNo() + "状态不是打包完成，不能生成运单");
+				}
+				//如果运单已经生成，则不能重复生成
+				if (order.getCreatedWaybill().equals("1")) {
+					throw new JeecgBootException("出库单" + order.getOrderNo() + "已生成运单，不能重复生成");
+				}
+				//查询该订单下的包裹
+				List<WmsShipment> shipments = wmsShipmentService.selectByOrderId(orderId);
 
-		int shipmentSize = shipments.size();
-		if(shipmentSize==0){
-			throw new JeecgBootException("出库单"+order.getOrderNo()+"没有包裹，不能生成运单");
+				int shipmentSize = shipments.size();
+				if (shipmentSize == 0) {
+					throw new JeecgBootException("出库单" + order.getOrderNo() + "没有包裹，不能生成运单");
+				}
+				//调用顺丰创建运单
+				List<String> waybillNos = sfService.requestSfCreateOrder(order, shipments);
+				//保存运单号
+				owner.saveWaybill(waybillNos, shipments);
+
+//			} finally {
+//					//释放锁
+//				lock.unlock();
+//			}
 		}
-		//调用顺丰创建运单
-		List<String> waybillNos = sfService.requestSfCreateOrder(order, shipments);
-		//保存运单号
-		owner.saveWaybill(waybillNos, shipments);
 	}
 
 	/**

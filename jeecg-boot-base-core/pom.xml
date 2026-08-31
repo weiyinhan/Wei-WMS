@@ -116,6 +116,11 @@
 			<artifactId>mybatis-plus-jsqlparser-4.9</artifactId>
 			<version>${mybatis-plus.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>org.redisson</groupId>
+			<artifactId>redisson</artifactId>
+			<version>3.17.7</version>
+		</dependency>
 		<!-- minidao -->
 		<dependency>
 			<groupId>com.baomidou</groupId>
