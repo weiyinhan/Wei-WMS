@@ -66,7 +66,7 @@ public class WmsInventoryTransByDeliver extends ServiceImpl<WmsInventoryTransMap
          *
          */
         //根据源储位编码、商品id、容器编码查询库存表
-        WmsInventory wmsInventorySource = wmsInventoryService.getInventoryByUniqueKey(inventoryTransParam.getProductId(), inventoryTransParam.getSourceLocationCode(), null);
+        WmsInventory wmsInventorySource = wmsInventoryService.getInventoryByUniqueKey(inventoryTransParam.getProductId(), inventoryTransParam.getSourceLocationCode(), inventoryTransParam.getBatchNumber());
         //如果wmsInventorySource为空则抛出异常
         if (wmsInventorySource == null) {
             //抛出异常
@@ -87,7 +87,7 @@ public class WmsInventoryTransByDeliver extends ServiceImpl<WmsInventoryTransMap
         WmsInventoryTrans wmsInventoryTrans = new WmsInventoryTrans();
         wmsInventoryTrans.setProductId(inventoryTransParam.getProductId());
         wmsInventoryTrans.setLocationCode(inventoryTransParam.getSourceLocationCode());
-//        wmsInventoryTrans.setBatchNumber(inventoryTransParam.getBatchNumber());
+        wmsInventoryTrans.setBatchNumber(inventoryTransParam.getBatchNumber());
         wmsInventoryTrans.setChangeQuantity(inventoryTransParam.getExecQuantity()*-1);
         wmsInventoryTrans.setTransactionType(inventoryTransParam.getTransactionType());
         wmsInventoryTrans.setRemarks(inventoryTransParam.getRemarks());

@@ -84,7 +84,14 @@ public class WmsWaybillServiceImpl  implements IWmsWaybillService {
 
 	@Override
 	public List<String> selectWaybillNosByWaveId(String waveId) {
-		return List.of();
+		//根据波次id查询波次下的所有出库单
+		List<WmsOutOrders> orders = wmsOutOrdersService.selectByWaveId(waveId);
+		//收集所有出库单下包裹的运单号
+		return orders.stream()
+				.flatMap(order -> wmsShipmentService.selectByOrderId(order.getId()).stream())
+				.map(WmsShipment::getTrackingNo)
+				.filter(StringUtils::isNotBlank)
+				.collect(Collectors.toList());
 	}
 
 	/**
@@ -127,7 +134,7 @@ public class WmsWaybillServiceImpl  implements IWmsWaybillService {
 //				lock.unlock();
 //			}
 		}
-	}
+
 
 	/**
 	 * 保存运单号

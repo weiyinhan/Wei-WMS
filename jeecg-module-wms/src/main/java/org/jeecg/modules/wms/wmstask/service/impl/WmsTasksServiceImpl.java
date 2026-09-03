@@ -1,5 +1,6 @@
 package org.jeecg.modules.wms.wmstask.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
@@ -13,6 +14,8 @@ import org.jeecg.common.system.vo.LoginUser;
 import org.jeecg.common.util.DateUtils;
 import org.jeecg.common.util.RedisUtil;
 import org.jeecg.modules.wms.config.WarehouseDictEnum;
+import org.jeecg.modules.wms.goods.entity.WmsProducts;
+import org.jeecg.modules.wms.goods.service.IWmsProductsService;
 import org.jeecg.modules.wms.inorder.entity.WmsStockInOrderItems;
 import org.jeecg.modules.wms.inorder.entity.WmsStockInOrders;
 import org.jeecg.modules.wms.inorder.service.IWmsStockInOrderItemsService;
@@ -20,6 +23,20 @@ import org.jeecg.modules.wms.inorder.service.IWmsStockInOrdersService;
 import org.jeecg.modules.wms.inventory.service.impl.WmsInventoryTransByPutway;
 import org.jeecg.modules.wms.inventory.service.impl.WmsInventoryTransByReceiving;
 import org.jeecg.modules.wms.inventory.vo.WmsInventoryTransParam;
+import org.jeecg.modules.wms.pickroute.MultiProductPickingRouteOptimized;
+import org.jeecg.modules.wms.pickroute.dto.Location;
+import org.jeecg.modules.wms.pickroute.dto.Node;
+import org.jeecg.modules.wms.pickroute.dto.Product;
+import org.jeecg.modules.wms.warehouse.entity.WmsStorageLocations;
+import org.jeecg.modules.wms.warehouse.entity.WmsStorageZones;
+import org.jeecg.modules.wms.warehouse.service.IWmsStorageLocationsService;
+import org.jeecg.modules.wms.warehouse.service.IWmsStorageZonesService;
+import org.jeecg.modules.wms.warehouse.service.impl.WmsStorageZonesServiceImpl;
+import org.jeecg.modules.wms.wave.entity.WmsWaveMaster;
+import org.jeecg.modules.wms.wave.entity.WmsWaveSkuSummary;
+import org.jeecg.modules.wms.wave.service.IWmsWaveMasterService;
+import org.jeecg.modules.wms.wave.service.IWmsWaveSkuSummaryService;
+import org.jeecg.modules.wms.wave.service.impl.WmsWaveSkuSummaryServiceImpl;
 import org.jeecg.modules.wms.wmstask.entity.WmsTasks;
 import org.jeecg.modules.wms.wmstask.entity.WmsTasksRecords;
 import org.jeecg.modules.wms.wmstask.mapper.WmsTasksMapper;
@@ -31,8 +48,13 @@ import org.springframework.stereotype.Service;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static org.jeecg.modules.wms.pickroute.MultiProductPickingRouteOptimized.*;
 
 /**
  * @Description: 任务表
@@ -59,6 +81,17 @@ public class WmsTasksServiceImpl extends ServiceImpl<WmsTasksMapper, WmsTasks> i
 
     @Autowired
     private WmsInventoryTransByPutway wmsInventoryExecByPutway;
+
+    @Autowired
+    private IWmsWaveMasterService wmsWaveMasterService;
+    @Autowired
+    private IWmsWaveSkuSummaryService wmsWaveSkuSummaryService;
+    @Autowired
+    private IWmsProductsService wmsProductsService;
+    @Autowired
+    private IWmsStorageLocationsService wmsStorageLocationsService;
+    @Autowired
+    private IWmsStorageZonesService wmsStorageZonesService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -261,6 +294,11 @@ public class WmsTasksServiceImpl extends ServiceImpl<WmsTasksMapper, WmsTasks> i
         // 任务编码
         wmsTasksRecords.setTaskNumber(wmsTasks.getTaskNumber());
         // 任务类型
+        // 波次id
+        wmsTasksRecords.setWaveOrderId(wmsTasks.getWaveOrderId());
+        // 波次明细id
+        wmsTasksRecords.setWaveSkuSummaryId(wmsTasks.getWaveSkuSummaryId());
+        // 任务类型
         wmsTasksRecords.setTaskType(wmsTasks.getTaskType());
         // 执行时间
         wmsTasksRecords.setOperationTime(new Date());
@@ -371,7 +409,7 @@ public class WmsTasksServiceImpl extends ServiceImpl<WmsTasksMapper, WmsTasks> i
 
     /**
      * 上架
-     * 
+     *
      * @param wmsTasksRecords
      */
     @Transactional(rollbackFor = Exception.class)
@@ -421,4 +459,84 @@ public class WmsTasksServiceImpl extends ServiceImpl<WmsTasksMapper, WmsTasks> i
         wmsInventoryExecByPutway.transfer(inventoryTransParam);
 
     }
+
+    @Override
+    public String viewPickPath(String waveId) {
+        WmsWaveMaster wmsWaveMaster = wmsWaveMasterService.getById(waveId);
+        if (wmsWaveMaster == null) {
+            throw new RuntimeException("未找到对应的波次,id:" + waveId);
+        }
+        // 如果状态是已创建则不允许查询拣货路径
+        if (WarehouseDictEnum.WAVE_CREATED.getCode().equals(wmsWaveMaster.getStatus())) {
+            throw new RuntimeException("波次" + wmsWaveMaster.getWaveNo() + "未完成拣货,不允许查询拣货路径");
+        }
+        // 如果存在拣货路径图片，则直接返回
+        if (StringUtils.isNotBlank(wmsWaveMaster.getPickPathImg())) {
+            return wmsWaveMaster.getPickPathImg();
+        }
+        // 根据波次id查询波次拣货明细
+        List<WmsWaveSkuSummary> waveSkuSummaries = wmsWaveSkuSummaryService.selectByWaveId(waveId);
+
+        // 起始位置
+        Node startNode = new Node(0, 0);
+
+        // 从waveSkuSummary中获取商品信息
+        List<Product> products = waveSkuSummaries.stream().map(waveSkuSummary -> {
+            String skuId = waveSkuSummary.getSkuId();
+            WmsProducts wmsProducts = wmsProductsService.getById(skuId);
+            // 储位编码
+            String locationCode = waveSkuSummary.getLocationCode();
+            // 查询储位
+            WmsStorageLocations wmsStorageLocations = wmsStorageLocationsService.getBaseMapper()
+                    .selectOne(new LambdaQueryWrapper<WmsStorageLocations>().eq(WmsStorageLocations::getLocationCode,
+                            locationCode));
+            // 查询储区
+            WmsStorageZones wmsStorageZones = wmsStorageZonesService.getById(wmsStorageLocations.getZoneId());
+            Product product = new Product(wmsProducts.getProductCode(),
+                    wmsProducts.getProductName(),
+                    new Location(wmsStorageZones.getZoneName(),
+                            Integer.parseInt(wmsStorageLocations.getLocationLine()),
+                            Integer.parseInt(wmsStorageLocations.getLocationRank()),
+                            wmsStorageLocations.getLocationCode()));
+            return product;
+        }).collect(Collectors.toList());
+
+        // 计算带商品信息的最优路径
+        MultiProductPickingRouteOptimized.RouteWithProducts routeWithProducts = calculateOptimalPickingRouteWithProducts(
+                startNode, products);
+
+        // 生成图形数据
+        System.out.println("\nSVG图形数据:");
+        String svgData = generateSVGData(routeWithProducts, startNode, products);
+
+        // // 保存SVG到文件
+        // saveSVGToFile(svgData, "picking_route.svg");
+        //将图形代码保存数据库
+        WmsWaveMaster wmsWaveMaster1 = new WmsWaveMaster();
+        wmsWaveMaster1.setId(waveId);
+        wmsWaveMaster1.setPickPathImg(svgData);
+        wmsWaveMasterService.updateById(wmsWaveMaster1);
+        return svgData;
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

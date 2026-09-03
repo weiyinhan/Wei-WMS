@@ -387,6 +387,10 @@ public class PickingTasksServiceImpl implements IPickingTasksService {
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void completeSorting(List<WmsOutOrdersItems> wmsOutOrdersItemsList) {
+        //空数据校验，防止前端未传分拣数据时静默返回成功
+        if (wmsOutOrdersItemsList == null || wmsOutOrdersItemsList.isEmpty()) {
+            throw new RuntimeException("未选择分拣数据，请先勾选要分拣的出库单明细");
+        }
         //转成数组
 //        String[] outOrderItemIdArray = outOrderItemIds.split(",");
         //出库单idList

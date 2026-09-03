@@ -55,4 +55,10 @@ public interface IWmsTasksService extends IService<WmsTasks> {
      * 上架方法
      */
     public void putaway(WmsTasksRecords wmsTasksRecords);
+    /**
+     * 获取拣货任务，返回拣货路径SVG数据
+     * @param waveId 波次id
+     * @return 拣货路径SVG字符串
+     */
+    public String viewPickPath(String waveId);
 }

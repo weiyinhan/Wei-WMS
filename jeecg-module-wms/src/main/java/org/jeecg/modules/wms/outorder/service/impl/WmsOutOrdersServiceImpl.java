@@ -352,14 +352,16 @@ public class WmsOutOrdersServiceImpl extends ServiceImpl<WmsOutOrdersMapper, Wms
         if (orderIdsPicked.size() <= 0) {
             return;
         }
-        //更新 出库单 的拣货状态为拣货完成，由拣货中更新中拣货完成
+        //更新 出库单 的拣货状态为拣货完成，允许从ALLOCATED或PICKING两种前置状态推进
         LambdaUpdateWrapper<WmsOutOrders> set = new LambdaUpdateWrapper<WmsOutOrders>()
                 .in(WmsOutOrders::getId, orderIdsPicked)
-                .eq(WmsOutOrders::getStatus, WarehouseDictEnum.OUTBOUND_PICKING.getCode())
+                .in(WmsOutOrders::getStatus,
+                        WarehouseDictEnum.OUTBOUND_ALLOCATED.getCode(),
+                        WarehouseDictEnum.OUTBOUND_PICKING.getCode())
                 .set(WmsOutOrders::getStatus, WarehouseDictEnum.OUTBOUND_PICKED.getCode());
         int update = wmsOutOrdersMapper.update(null, set);
         if (update <= 0) {
-            throw new JeecgBootException("为出库单拣货数量及状态失败!");
+            throw new JeecgBootException("更新出库单拣货状态失败，共"+orderIdsPicked.size()+"条预期应更新的出库单未找到匹配前置状态(已分配/拣货中)的记录");
         }
     }
 
