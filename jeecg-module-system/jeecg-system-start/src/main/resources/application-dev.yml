@@ -335,3 +335,18 @@ wms:
     check_word: JaRNz0ukC0tifeW4jNx1aq211wHby5EI
     call_url: https://sfapi-sbox.sf-express.com/std/service
     monthly_card: 755123567
+
+  spring:
+    ai:
+      ollama:
+        base-url: http://localhost:11434 # ollama服务地址， 这就是默认值
+        chat:
+          model: deepseek-r1:7b # 模型名称
+          options:
+            temperature: 0.8 # 模型温度，影响模型生成结果的随机性，越小越稳定
+      openai:
+        base-url: https://dashscope.aliyuncs.com/compatible-mode
+        api-key: ${OPENAI_API_KEY}
+        chat:
+          options:
+            model: qwen-max-latest # 可选择的模型列表 https://help.aliyun.com/zh/model-studio/getting-started/models

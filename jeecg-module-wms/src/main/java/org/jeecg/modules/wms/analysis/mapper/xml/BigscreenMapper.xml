@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.jeecg.modules.wms.analysis.mapper.BigscreenMapper">
+
+    <!--统计wms_task-->
+    <select id="countTaskList" parameterType="org.jeecg.modules.wms.wmstask.entity.WmsTasks" resultType="org.jeecg.modules.wms.wmstask.entity.WmsTasks">
+        select  count(1)task_count,task_type from wms_tasks t
+        where 1=1
+        <if test="createTimeString != null and createTimeString !=''">
+            and DATE(t.create_time) = #{createTimeString}
+        </if>
+        <if test="taskStatus != null and taskStatus !=''">
+            and t.task_status = #{taskStatus}
+        </if>
+        <!--根据目的仓库查询-->
+        <if test="targetWarehouseId != null and targetWarehouseId=''">
+            and t.target_warehouse_id = #{targetWarehouseId}
+        </if>
+        <!--根据源仓库查询-->
+        <if test="sourceWarehouseId != null and sourceWarehouseId=''">
+            and t.source_warehouse_id = #{sourceWarehouseId}
+        </if>
+
+        group by  t.task_type
+    </select>
+
+    <!--按月统计入库单数量-->
+    <select id="countInOrderByMonth" resultType="org.jeecg.modules.wms.analysis.vo.TrendVo">
+        select DATE_FORMAT(t.create_time, '%Y-%m') as name, count(1) as `value`
+        from wms_stock_in_orders t
+        where YEAR(t.create_time) = #{year}
+        <if test="warehouseId != null and warehouseId != ''">
+            and t.warehouse_id = #{warehouseId}
+        </if>
+        group by DATE_FORMAT(t.create_time, '%Y-%m')
+        order by name asc
+    </select>
+
+    <!--按月统计出库单数量-->
+    <select id="countOutOrderByMonth" resultType="org.jeecg.modules.wms.analysis.vo.TrendVo">
+        select DATE_FORMAT(t.create_time, '%Y-%m') as name, count(1) as `value`
+        from wms_out_orders t
+        where YEAR(t.create_time) = #{year}
+        <if test="warehouseId != null and warehouseId != ''">
+            and t.warehouse_id = #{warehouseId}
+        </if>
+        group by DATE_FORMAT(t.create_time, '%Y-%m')
+        order by name asc
+    </select>
+</mapper>

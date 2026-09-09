@@ -43,7 +43,7 @@ public class MybatisPlusSaasConfig {
      *  3.菜单表、租户表不做租户隔离
      *  4.通过拦截器MybatisInterceptor实现，增删改查数据 自动注入租户ID
      */
-    public static final Boolean OPEN_SYSTEM_TENANT_CONTROL = false;
+    public static final Boolean OPEN_SYSTEM_TENANT_CONTROL = true;
     
     /**
      * 哪些表需要做多租户 表需要添加一个字段 tenant_id
@@ -72,6 +72,8 @@ public class MybatisPlusSaasConfig {
             TENANT_TABLE.add("airag_knowledge");
             TENANT_TABLE.add("airag_knowledge_doc");
             TENANT_TABLE.add("airag_model");
+
+
         }
 
         //2.示例测试
@@ -81,11 +83,15 @@ public class MybatisPlusSaasConfig {
     }
 
 
+    /**
+     * 拦截器
+     * @return
+     */
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor() {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
         // 先 add TenantLineInnerInterceptor 再 add PaginationInnerInterceptor
-        interceptor.addInnerInterceptor(new TenantLineInnerInterceptor(new TenantLineHandler() {
+        interceptor.addInnerInterceptor(new TenantLineInnerInterceptor(new TenantLineHandler() {//处理类
             @Override
             public Expression getTenantId() {
                 String tenantId = TenantContext.getTenant();
