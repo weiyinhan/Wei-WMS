@@ -45,5 +45,8 @@ public class ChatSendParams {
      * 图片列表
      */
     private List<String> images;
-
+    /**
+     * 当前用户
+     */
+    private String username;
 }

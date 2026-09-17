@@ -191,6 +191,7 @@ public class AiragKnowledgeDocServiceImpl extends ServiceImpl<AiragKnowledgeDocM
     }
 
 
+    @Transactional(rollbackFor = {Exception.class})
     @Override
     public Result<?> removeByKnowIds(List<String> knowIds) {
         AssertUtils.assertNotEmpty("选择知识库", knowIds);
@@ -205,6 +206,7 @@ public class AiragKnowledgeDocServiceImpl extends ServiceImpl<AiragKnowledgeDocM
         return Result.OK();
     }
 
+    @Transactional(rollbackFor = {Exception.class})
     @Override
     public Result<?> removeDocByIds(List<String> docIds) {
         AssertUtils.assertNotEmpty("请选择要删除的文档", docIds);

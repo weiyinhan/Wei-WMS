@@ -19,6 +19,7 @@ import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
 import dev.langchain4j.store.embedding.pgvector.PgVectorEmbeddingStore;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.tika.parser.AutoDetectParser;
@@ -38,6 +39,11 @@ import org.jeecg.modules.airag.llm.entity.AiragModel;
 import org.jeecg.modules.airag.llm.service.IAiragKnowledgeService;
 import org.jeecg.modules.airag.llm.service.IAiragModelService;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.ai.transformer.splitter.TokenTextSplitter;
+import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.filter.Filter;
+import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -111,7 +117,8 @@ public class EmbeddingHandler implements IEmbeddingHandler {
      * 向量存储缓存
      */
     private static final ConcurrentHashMap<String, EmbeddingStore<TextSegment>> EMBED_STORE_CACHE = new ConcurrentHashMap<>();
-
+    @Resource(name = "pgVectorStore")
+    private VectorStore pgVectorStore;
     /**
      * 向量化文档
      *
@@ -128,6 +135,8 @@ public class EmbeddingHandler implements IEmbeddingHandler {
         AssertUtils.assertNotEmpty("文档不能为空", doc);
         // 读取文档
         String content = doc.getContent();
+        //文档id
+        String docId = doc.getId();
         // 向量化并存储
         if (oConvertUtils.isEmpty(content)) {
             switch (doc.getType()) {
@@ -149,28 +158,87 @@ public class EmbeddingHandler implements IEmbeddingHandler {
         }
         //update-end---author:chenrui ---date:20250307  for：[QQYUN-11443]【AI】是不是应该把标题也生成到向量库里，标题一般是有意义的------------
 
-        // 向量化 date:2025/2/18
-        AiragModel model = getEmbedModelData(airagKnowledge.getEmbedId());
-        AiModelOptions modelOp = buildModelOptions(model);
-        EmbeddingModel embeddingModel = AiModelFactory.createEmbeddingModel(modelOp);
-        EmbeddingStore<TextSegment> embeddingStore = getEmbedStore(model);
-        // 删除旧数据
-        embeddingStore.removeAll(metadataKey(EMBED_STORE_METADATA_DOCID).isEqualTo(doc.getId()));
-        // 分段器
-        DocumentSplitter splitter = DocumentSplitters.recursive(DEFAULT_SEGMENT_SIZE, DEFAULT_OVERLAP_SIZE, new OpenAiTokenizer());
-        // 分段并存储
-        EmbeddingStoreIngestor ingestor = EmbeddingStoreIngestor.builder()
-                .documentSplitter(splitter)
-                .embeddingModel(embeddingModel)
-                .embeddingStore(embeddingStore)
-                .build();
-        Metadata metadata = Metadata.metadata(EMBED_STORE_METADATA_DOCID, doc.getId())
-                .put(EMBED_STORE_METADATA_KNOWLEDGEID, doc.getKnowledgeId())
-                .put(EMBED_STORE_METADATA_DOCNAME, FilenameUtils.getName(doc.getTitle()));
-        Document from = Document.from(content, metadata);
-        ingestor.ingest(from);
-        return metadata.toMap();
+        //先删除文档原来存储的向量 ,根据文档id删除向量表中的向量
+        FilterExpressionBuilder filterExpressionBuilder = new FilterExpressionBuilder();
+        Filter.Expression expression = filterExpressionBuilder.eq(EMBED_STORE_METADATA_DOCID, docId).build();
+        pgVectorStore.delete(expression);
+
+        //定义一个元数据的map
+        HashMap<String, Object> metadataMap = new HashMap<>();
+        metadataMap.put(EMBED_STORE_METADATA_DOCID, docId);
+        metadataMap.put(EMBED_STORE_METADATA_KNOWLEDGEID, doc.getKnowledgeId());
+        metadataMap.put(EMBED_STORE_METADATA_DOCNAME, FilenameUtils.getName(doc.getTitle()));
+
+
+        //向向量表存储向量 需要先定义Document对象
+        org.springframework.ai.document.Document document = new org.springframework.ai.document.Document(content, metadataMap);
+
+        // 分段器 - 使用Spring AI的DocumentSplitter(如果可用)或自定义实现
+        TokenTextSplitter textSplitter = new TokenTextSplitter();
+        //文档分段
+        List<org.springframework.ai.document.Document> documents = textSplitter.split(document);
+        for (int i = 0; i < documents.size(); i++) {
+            Map<String, Object> metadata = documents.get(i).getMetadata();
+            //设置序号
+            metadata.put("index", i);
+            //设置文档名称为原文档名称(i)
+            metadata.put(EMBED_STORE_METADATA_DOCNAME, metadata.get(EMBED_STORE_METADATA_DOCNAME) + "(" + i + ")");
+        }
+        //向量化
+        pgVectorStore.add(documents);
+
+        return metadataMap;
     }
+//    public Map<String, Object> embeddingDocument(String knowId, AiragKnowledgeDoc doc) {
+//        AiragKnowledge airagKnowledge = airagKnowledgeService.getById(knowId);
+//        AssertUtils.assertNotEmpty("知识库不存在", airagKnowledge);
+//        AssertUtils.assertNotEmpty("请先为知识库配置向量模型库", airagKnowledge.getEmbedId());
+//        AssertUtils.assertNotEmpty("文档不能为空", doc);
+//        // 读取文档
+//        String content = doc.getContent();
+//        // 向量化并存储
+//        if (oConvertUtils.isEmpty(content)) {
+//            switch (doc.getType()) {
+//                case KNOWLEDGE_DOC_TYPE_FILE:
+//                    //解析文件
+//                    if (knowConfigBean.isEnableMinerU()) {
+//                        parseFileByMinerU(doc);
+//                    }
+//                    content = parseFile(doc);
+//                    break;
+//                case KNOWLEDGE_DOC_TYPE_WEB:
+//                    // TODO author: chenrui for:读取网站内容 date:2025/2/18
+//                    break;
+//            }
+//        }
+//        //update-begin---author:chenrui ---date:20250307  for：[QQYUN-11443]【AI】是不是应该把标题也生成到向量库里，标题一般是有意义的------------
+//        if (oConvertUtils.isNotEmpty(doc.getTitle())) {
+//            content = doc.getTitle() + "\n\n" + content;
+//        }
+//        //update-end---author:chenrui ---date:20250307  for：[QQYUN-11443]【AI】是不是应该把标题也生成到向量库里，标题一般是有意义的------------
+//
+//        // 向量化 date:2025/2/18
+//        AiragModel model = getEmbedModelData(airagKnowledge.getEmbedId());
+//        AiModelOptions modelOp = buildModelOptions(model);
+//        EmbeddingModel embeddingModel = AiModelFactory.createEmbeddingModel(modelOp);
+//        EmbeddingStore<TextSegment> embeddingStore = getEmbedStore(model);
+//        // 删除旧数据
+//        embeddingStore.removeAll(metadataKey(EMBED_STORE_METADATA_DOCID).isEqualTo(doc.getId()));
+//        // 分段器
+//        DocumentSplitter splitter = DocumentSplitters.recursive(DEFAULT_SEGMENT_SIZE, DEFAULT_OVERLAP_SIZE, new OpenAiTokenizer());
+//        // 分段并存储
+//        EmbeddingStoreIngestor ingestor = EmbeddingStoreIngestor.builder()
+//                .documentSplitter(splitter)
+//                .embeddingModel(embeddingModel)
+//                .embeddingStore(embeddingStore)
+//                .build();
+//        Metadata metadata = Metadata.metadata(EMBED_STORE_METADATA_DOCID, doc.getId())
+//                .put(EMBED_STORE_METADATA_KNOWLEDGEID, doc.getKnowledgeId())
+//                .put(EMBED_STORE_METADATA_DOCNAME, FilenameUtils.getName(doc.getTitle()));
+//        Document from = Document.from(content, metadata);
+//        ingestor.ingest(from);
+//        return metadata.toMap();
+//    }
 
     /**
      * 向量查询(多知识库)
@@ -226,37 +294,89 @@ public class EmbeddingHandler implements IEmbeddingHandler {
         AiragKnowledge knowledge = airagKnowledgeService.getById(knowId);
         AssertUtils.assertNotEmpty("知识库不存在", knowledge);
         AssertUtils.assertNotEmpty("请填写查询内容", queryText);
-        AiragModel model = getEmbedModelData(knowledge.getEmbedId());
-
-        AiModelOptions modelOp = buildModelOptions(model);
-        EmbeddingModel embeddingModel = AiModelFactory.createEmbeddingModel(modelOp);
-        Embedding queryEmbedding = embeddingModel.embed(queryText).content();
-
-        topNumber = oConvertUtils.getInteger(topNumber, modelOp.getTopNumber());
-        similarity = oConvertUtils.getDou(similarity, modelOp.getSimilarity());
-        EmbeddingSearchRequest embeddingSearchRequest = EmbeddingSearchRequest.builder()
-                .queryEmbedding(queryEmbedding)
-                .maxResults(topNumber)
-                .minScore(similarity)
-                .filter(metadataKey(EMBED_STORE_METADATA_KNOWLEDGEID).isEqualTo(knowId))
+        //限定只搜索某个知识库下的文档
+        FilterExpressionBuilder filterExpressionBuilder = new FilterExpressionBuilder();
+        Filter.Expression expression = filterExpressionBuilder.eq("knowledgeId", knowId).build();
+        //指定请求参数
+        SearchRequest.Builder builder = SearchRequest.builder();
+        SearchRequest searchRequest = builder.topK(topNumber)
+                .similarityThreshold(similarity)//大于这个阈值才显示
+                .query(queryText)
+                .filterExpression(expression)
                 .build();
 
-        EmbeddingStore<TextSegment> embeddingStore = getEmbedStore(model);
-        List<EmbeddingMatch<TextSegment>> relevant = embeddingStore.search(embeddingSearchRequest).matches();
+        //执行向量搜索
+        List<org.springframework.ai.document.Document> documents = pgVectorStore.similaritySearch(searchRequest);
+
         List<Map<String, Object>> result = new ArrayList<>();
-        if (oConvertUtils.isObjectNotEmpty(relevant)) {
-            result = relevant.stream().map(matchRes -> {
+        if (oConvertUtils.isObjectNotEmpty(documents)) {
+            result = documents.stream().map(matchRes -> {
                 Map<String, Object> data = new HashMap<>();
-                data.put("score", matchRes.score());
-                data.put("content", matchRes.embedded().text());
-                Metadata metadata = matchRes.embedded().metadata();
-                data.put("chunk", metadata.getInteger("index"));
-                data.put(EMBED_STORE_METADATA_DOCNAME, metadata.getString(EMBED_STORE_METADATA_DOCNAME));
+                data.put("score", matchRes.getScore());
+                data.put("content", matchRes.getText());
+                Map<String, Object> metadata = matchRes.getMetadata();
+                data.put("chunk", metadata.get("index"));
+                data.put(EMBED_STORE_METADATA_DOCNAME, metadata.get(EMBED_STORE_METADATA_DOCNAME));
                 return data;
             }).collect(Collectors.toList());
         }
+
+//        AiragModel model = getEmbedModelData(knowledge.getEmbedId());
+//
+//        AiModelOptions modelOp = buildModelOptions(model);
+//        EmbeddingModel embeddingModel = AiModelFactory.createEmbeddingModel(modelOp);
+//        Embedding queryEmbedding = embeddingModel.embed(queryText).content();
+//
+//        topNumber = oConvertUtils.getInteger(topNumber, modelOp.getTopNumber());
+//        similarity = oConvertUtils.getDou(similarity, modelOp.getSimilarity());
+//        EmbeddingSearchRequest embeddingSearchRequest = EmbeddingSearchRequest.builder()
+//                .queryEmbedding(queryEmbedding)
+//                .maxResults(topNumber)
+//                .minScore(similarity)
+//                .filter(metadataKey(EMBED_STORE_METADATA_KNOWLEDGEID).isEqualTo(knowId))
+//                .build();
+//
+//        EmbeddingStore<TextSegment> embeddingStore = getEmbedStore(model);
+//        List<EmbeddingMatch<TextSegment>> relevant = embeddingStore.search(embeddingSearchRequest).matches();
+
         return result;
     }
+//    public List<Map<String, Object>> searchEmbedding(String knowId, String queryText, Integer topNumber, Double similarity) {
+//        AssertUtils.assertNotEmpty("请选择知识库", knowId);
+//        AiragKnowledge knowledge = airagKnowledgeService.getById(knowId);
+//        AssertUtils.assertNotEmpty("知识库不存在", knowledge);
+//        AssertUtils.assertNotEmpty("请填写查询内容", queryText);
+//        AiragModel model = getEmbedModelData(knowledge.getEmbedId());
+//
+//        AiModelOptions modelOp = buildModelOptions(model);
+//        EmbeddingModel embeddingModel = AiModelFactory.createEmbeddingModel(modelOp);
+//        Embedding queryEmbedding = embeddingModel.embed(queryText).content();
+//
+//        topNumber = oConvertUtils.getInteger(topNumber, modelOp.getTopNumber());
+//        similarity = oConvertUtils.getDou(similarity, modelOp.getSimilarity());
+//        EmbeddingSearchRequest embeddingSearchRequest = EmbeddingSearchRequest.builder()
+//                .queryEmbedding(queryEmbedding)
+//                .maxResults(topNumber)
+//                .minScore(similarity)
+//                .filter(metadataKey(EMBED_STORE_METADATA_KNOWLEDGEID).isEqualTo(knowId))
+//                .build();
+//
+//        EmbeddingStore<TextSegment> embeddingStore = getEmbedStore(model);
+//        List<EmbeddingMatch<TextSegment>> relevant = embeddingStore.search(embeddingSearchRequest).matches();
+//        List<Map<String, Object>> result = new ArrayList<>();
+//        if (oConvertUtils.isObjectNotEmpty(relevant)) {
+//            result = relevant.stream().map(matchRes -> {
+//                Map<String, Object> data = new HashMap<>();
+//                data.put("score", matchRes.score());
+//                data.put("content", matchRes.embedded().text());
+//                Metadata metadata = matchRes.embedded().metadata();
+//                data.put("chunk", metadata.getInteger("index"));
+//                data.put(EMBED_STORE_METADATA_DOCNAME, metadata.getString(EMBED_STORE_METADATA_DOCNAME));
+//                return data;
+//            }).collect(Collectors.toList());
+//        }
+//        return result;
+//    }
 
     /**
      * 获取向量查询路由
@@ -311,11 +431,12 @@ public class EmbeddingHandler implements IEmbeddingHandler {
      */
     public void deleteEmbedDocsByKnowId(String knowId, String modelId) {
         AssertUtils.assertNotEmpty("选择知识库", knowId);
-        AiragModel model = getEmbedModelData(modelId);
-
-        EmbeddingStore<TextSegment> embeddingStore = getEmbedStore(model);
-        // 删除数据
-        embeddingStore.removeAll(metadataKey(EMBED_STORE_METADATA_KNOWLEDGEID).isEqualTo(knowId));
+        // 校验向量模型是否有效（保留参数兼容性；Spring AI 的 pgVectorStore 为全局共享 Bean，不依赖具体 model）
+        getEmbedModelData(modelId);
+        // 删除数据 - 使用 Spring AI 的 pgVectorStore
+        FilterExpressionBuilder filterExpressionBuilder = new FilterExpressionBuilder();
+        Filter.Expression expression = filterExpressionBuilder.eq(EMBED_STORE_METADATA_KNOWLEDGEID, knowId).build();
+        pgVectorStore.delete(expression);
     }
 
     /**
@@ -328,11 +449,13 @@ public class EmbeddingHandler implements IEmbeddingHandler {
      */
     public void deleteEmbedDocsByDocIds(List<String> docIds, String modelId) {
         AssertUtils.assertNotEmpty("选择文档", docIds);
-        AiragModel model = getEmbedModelData(modelId);
-
-        EmbeddingStore<TextSegment> embeddingStore = getEmbedStore(model);
-        // 删除数据
-        embeddingStore.removeAll(metadataKey(EMBED_STORE_METADATA_DOCID).isIn(docIds));
+        // 校验向量模型是否有效（保留参数兼容性；Spring AI 的 pgVectorStore 为全局共享 Bean，不依赖具体 model）
+        getEmbedModelData(modelId);
+        // 删除数据 - 使用 Spring AI 的 pgVectorStore
+        // 注意：Java 不会自动把 List 展开成 varargs，必须用 toArray()
+        FilterExpressionBuilder filterExpressionBuilder = new FilterExpressionBuilder();
+        Filter.Expression expression = filterExpressionBuilder.in(EMBED_STORE_METADATA_DOCID, docIds.toArray()).build();
+        pgVectorStore.delete(expression);
     }
 
     /**

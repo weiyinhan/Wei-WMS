@@ -80,6 +80,36 @@ spring:
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
+  # ===== Spring AI 配置（千问 DashScope 云端 API，兼容 OpenAI 协议）=====
+  ai:
+    ## ===== 方案一：本地 Ollama 部署的 DeepSeek（本地装 Ollama）=====
+    #ollama:
+    #  base-url: http://localhost:11434
+    #  chat:
+    #    options:
+    #      model: deepseek-r1:7b
+    #      temperature: 0.8
+    # ===== 方案二：DeepSeek 云端 API（需要 API Key，兼容 OpenAI 协议）=====
+    # openai:
+    #   base-url: https://api.deepseek.com
+    #   api-key: ${DEEPSEEK_API_KEY:REDACTED_SET_DEEPSEEK_API_KEY}
+    #   chat:
+    #     options:
+    #       model: deepseek-chat
+    #       temperature: 0.7
+    # ===== 方案三：千问 DashScope 云端 API（OpenAI 兼容模式）=====
+    openai:
+      base-url: https://dashscope.aliyuncs.com/compatible-mode
+      api-key: REDACTED_SET_DASHSCOPE_API_KEY
+      chat:
+        options:
+          model: qwen-max # 模型名称
+          temperature: 0.8 # 模型温度，值越大，输出结果越随机
+      # 向量模型：DashScope 没有 Spring AI 默认的 text-embedding-ada-002，必须显式指定千问向量模型
+      embedding:
+        options:
+          model: text-embedding-v4
+          dimensions: 768 # 向量维度，必须与 ChatConfiguration 中 pgVectorStore 的 dimensions(768) 一致
   jpa:
     open-in-view: false
   aop:
@@ -111,6 +141,7 @@ spring:
     exclude:
       - com.alibaba.druid.spring.boot3.autoconfigure.DruidDataSourceAutoConfigure
       - org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration
+      - org.springframework.ai.autoconfigure.vectorstore.pgvector.PgVectorStoreAutoConfiguration
   datasource:
     druid:
       stat-view-servlet:
@@ -121,6 +152,8 @@ spring:
       web-stat-filter:
         enabled: true
     dynamic:
+      enabled: true #启用动态数据源，默认true
+      primary: mysql #设置默认的数据源或者数据源组,默认值即为master
       druid: # 全局druid参数，绝大部分值和默认保持一致。(现已支持的参数如下,不清楚含义不要乱设置)
         # 连接池的配置信息
         # 初始化大小，最小，最大
@@ -150,17 +183,16 @@ spring:
           merge-sql: true
           slow-sql-millis: 5000
       datasource:
-        master:
+        mysql:
           url: jdbc:mysql://127.0.0.1:3306/xingchenwms?characterEncoding=UTF-8&useUnicode=true&useSSL=false&tinyInt1isBit=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
           username: root
           password: 4568506
           driver-class-name: com.mysql.cj.jdbc.Driver
-          # 多数据源配置
-          #multi-datasource1:
-          #url: jdbc:mysql://localhost:3306/jeecg-boot2?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
-          #username: root
-          #password: root
-          #driver-class-name: com.mysql.cj.jdbc.Driver
+        postgresql:
+          url: jdbc:postgresql://127.0.0.1:5432/postgres
+          username: postgres
+          password: your_password
+          driver-class-name: org.postgresql.Driver
   #redis 配置
   data:
     redis:
@@ -191,9 +223,16 @@ jeecg:
   # AI集成
   ai-chat:
     enabled: true
-    model: deepseek-chat
-    apiKey: ??
-    apiHost: https://api.deepseek.com
+    # ===== DeepSeek 原配置（已注释，切回时取消注释并注释掉千问配置）=====
+    # provider: DEEPSEEK
+    # model: deepseek-chat
+    # apiKey: REDACTED_SET_DEEPSEEK_API_KEY
+    # apiHost: https://api.deepseek.com
+    # ===== 千问 DashScope 配置（当前生效）=====
+    provider: QWEN
+    model: qwen-plus
+    apiKey: REDACTED_SET_DASHSCOPE_API_KEY
+    apiHost: https://dashscope.aliyuncs.com
     timeout: 60
   # AIRag向量库
   ai-rag:
@@ -214,19 +253,23 @@ jeecg:
   signatureSecret: dd05f1c54d63749eda95f9fa6d49v442a
   #签名拦截接口
   signUrls: /sys/dict/getDictItems/*,/sys/dict/loadDict/*,/sys/dict/loadDictOrderByValue/*,/sys/dict/loadDictItem/*,/sys/dict/loadTreeData,/sys/api/queryTableDictItemsByCode,/sys/api/queryFilterTableDictInfo,/sys/api/queryTableDictByKeys,/sys/api/translateDictFromTable,/sys/api/translateDictFromTableByKeys,/sys/sendChangePwdSms,/sys/user/sendChangePhoneSms,/sys/sms,/desform/api/sendVerifyCode
-  # 本地：local、Minio：minio、阿里云：
-  uploadType: alioss
+  # 本地：local、Minio：minio、阿里云：alioss
+  # OSS已过期，切换为本地存储（原配置保留如下，恢复时取消注释即可）
+  # uploadType: alioss
+  uploadType: local
   # 前端访问地址
   domainUrl:
     pc: http://localhost:3100
     app: http://localhost:8051
   path:
     #文件上传根目录 设置
-    upload: /opt/upFiles
+    # upload: /opt/upFiles  # Linux原配置，Windows下使用下方路径
+    upload: D:/upFiles
     #webapp文件路径
-    webapp: /opt/webapp
+    # webapp: /opt/webapp
+    webapp: D:/webapp
   shiro:
-    excludeUrls: /test/jeecgDemo/demo3,/test/jeecgDemo/redisDemo/**,/bigscreen/category/**,/bigscreen/visual/**,/bigscreen/map/**,/jmreport/bigscreen2/**
+    excludeUrls: /ai/**,/test/jeecgDemo/demo3,/test/jeecgDemo/redisDemo/**,/bigscreen/category/**,/bigscreen/visual/**,/bigscreen/map/**,/jmreport/bigscreen2/**
   #阿里云oss存储和大鱼短信秘钥配置
   oss:
     accessKey: REDACTED_SET_ALIYUN_ACCESS_KEY_ID
@@ -293,7 +336,8 @@ logging:
   level:
     org.springframework.context.support.PostProcessorRegistrationDelegate: error
     org.flywaydb: debug
-    org.jeecg.modules.system.mapper: info
+    org.jeecg.modules.system.mapper: debug
+    org.springframework.ai: debug
 knife4j:
   #开启增强配置
   enable: true
@@ -335,18 +379,3 @@ wms:
     check_word: JaRNz0ukC0tifeW4jNx1aq211wHby5EI
     call_url: https://sfapi-sbox.sf-express.com/std/service
     monthly_card: 755123567
-
-  spring:
-    ai:
-      ollama:
-        base-url: http://localhost:11434 # ollama服务地址， 这就是默认值
-        chat:
-          model: deepseek-r1:7b # 模型名称
-          options:
-            temperature: 0.8 # 模型温度，影响模型生成结果的随机性，越小越稳定
-      openai:
-        base-url: https://dashscope.aliyuncs.com/compatible-mode
-        api-key: ${OPENAI_API_KEY}
-        chat:
-          options:
-            model: qwen-max-latest # 可选择的模型列表 https://help.aliyun.com/zh/model-studio/getting-started/models

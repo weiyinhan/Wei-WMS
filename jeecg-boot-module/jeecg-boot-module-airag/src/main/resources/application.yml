@@ -1,6 +1,15 @@
 server:
   port: 7008
 spring:
+  ai:
+    openai:
+      # DeepSeek 兼容 OpenAI 协议，只需把 base-url 指向 DeepSeek 地址
+      base-url: https://api.deepseek.com
+      api-key: ${DEEPSEEK_API_KEY:REDACTED_SET_DEEPSEEK_API_KEY}
+      chat:
+        options:
+          model: deepseek-chat
+          temperature: 0.7
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
