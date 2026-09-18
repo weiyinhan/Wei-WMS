@@ -103,7 +103,7 @@ spring:
       api-key: REDACTED_SET_DASHSCOPE_API_KEY
       chat:
         options:
-          model: qwen-max # 模型名称
+          model: qwen3.8-max # 模型名称
           temperature: 0.8 # 模型温度，值越大，输出结果越随机
       # 向量模型：DashScope 没有 Spring AI 默认的 text-embedding-ada-002，必须显式指定千问向量模型
       embedding:
@@ -229,10 +229,10 @@ jeecg:
     # apiKey: REDACTED_SET_DEEPSEEK_API_KEY
     # apiHost: https://api.deepseek.com
     # ===== 千问 DashScope 配置（当前生效）=====
-    provider: QWEN
-    model: qwen-plus
+    provider: OPENAI
+    model: qwen3.8-max
     apiKey: REDACTED_SET_DASHSCOPE_API_KEY
-    apiHost: https://dashscope.aliyuncs.com
+    apiHost: https://dashscope.aliyuncs.com/compatible-mode/v1
     timeout: 60
   # AIRag向量库
   ai-rag:

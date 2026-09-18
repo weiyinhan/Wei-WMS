@@ -513,7 +513,7 @@ public class EmbeddingHandler implements IEmbeddingHandler {
                 .indexListSize(100)
                 // Table creation options
                 // Automatically create the table if it doesn’t exist
-                .createTable(true)
+                .createTable(false)  // 关闭自动建表，embeddings 视图由我们手动创建
                 //Don’t drop the table first (set to true if you want a fresh start)
                 .dropTableFirst(false)
                 .build();
@@ -522,7 +522,12 @@ public class EmbeddingHandler implements IEmbeddingHandler {
     }
 
     /**
-     * 构造ModelOptions
+     * 查询向量模型数据
+     * 
+     * @author chenrui
+     * @date 2025/2/20 20:08
+     */
+    /**构造ModelOptions
      *
      * @param model
      * @return
