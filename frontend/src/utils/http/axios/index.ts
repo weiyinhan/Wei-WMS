@@ -123,7 +123,10 @@ const transform: AxiosTransform = {
     } else {
       if (!isString(params)) {
         formatDate && formatRequestDate(params);
-        if (Reflect.has(config, 'data') && config.data && Object.keys(config.data).length > 0) {
+        //修复：Array.isArray() 时 Object.keys([]).length===0，会误判为"没传data"，
+        //     把params当data塞出去导致后端 START_OBJECT 反序列化失败。
+        const hasData = Reflect.has(config, 'data') && config.data && (Array.isArray(config.data) || Object.keys(config.data).length > 0);
+        if (hasData) {
           config.data = data;
           config.params = params;
         } else {

@@ -88,6 +88,7 @@
 		<module>jeecg-module-system</module>
 		<module>jeecg-boot-module</module>
 		<module>jeecg-module-wms</module>
+		<module>jeecg-module-iot</module>
 	</modules>
 
 	<repositories>
